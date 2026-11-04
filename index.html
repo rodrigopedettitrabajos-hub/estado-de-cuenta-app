@@ -1,5 +1,5 @@
 <!doctype html><html><head><meta charset=utf8><meta name=viewport content="width=device-width,initial-scale=1,viewport-fit=cover"><style>:root{color-scheme:light;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}html{scroll-padding-top:env(safe-area-inset-top,0px)}body{margin:0;padding:0;font:14px -apple-system,BlinkMacSystemFont,sans-serif;background:#fff;color:#000}img{max-width:100%}[hidden]:not([hidden=until-found i]){display:none!important}</style></head><body>
-<title>Estado de Cuenta Chivi</title>
+<title>Estado de Cuenta Chivi V0.15</title>
 <meta name="theme-color" content="#2E43A3">
 <meta name="claude:viewport-fit-sides" content="cover">
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -58,7 +58,7 @@ button,input,select{font:inherit;color:inherit}
 .eyebrow{margin:0;font-size:11.5px;font-weight:600;letter-spacing:.09em;text-transform:uppercase;color:var(--muted)}
 h1{margin:0;font-family:var(--font-display);font-weight:600;font-size:clamp(26px,3.4vw,34px);line-height:1.08;letter-spacing:-.015em;text-wrap:balance}
 .meta{margin:2px 0 0;color:var(--muted);font-size:13px}
-.file-block{display:flex;align-items:center;gap:10px;flex-wrap:wrap;min-width:0}
+.file-block{display:flex;align-items:center;gap:8px 10px;flex-wrap:wrap;min-width:0;margin-left:auto;justify-content:flex-end}
 .file-chip{display:flex;flex-direction:column;align-items:flex-end;min-width:0;text-align:right}
 .file-name{font-family:var(--font-mono);font-size:12.5px;max-width:280px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 .file-sub{font-size:12px;color:var(--faint)}
@@ -450,6 +450,18 @@ body.fullview #view>.tablewrap{flex:1 1 auto;max-height:none;min-height:0}
 .hint-x:hover{background:var(--sunken-2);color:var(--ink)}
 #rulesModal .rules-body{margin:0;display:flex;flex-direction:column;gap:12px}
 #rulesModal .modal-box{max-height:calc(100vh - 32px);overflow:auto}
+/* Versión y novedades */
+.ver{appearance:none;vertical-align:middle;margin-left:8px;padding:3px 9px;border-radius:999px;border:1px solid var(--accent);background:var(--accent-soft);color:var(--accent);font:600 12px/1.3 var(--font-body);cursor:pointer;letter-spacing:.02em}
+.ver:hover{filter:brightness(1.05)}
+.modal-box.news{width:min(680px,100%);max-height:calc(100vh - 32px);overflow:hidden}
+.news-body{overflow:auto;padding-right:6px;font-size:13.5px;line-height:1.55}
+.news-body h3{font-family:var(--font-display);font-size:16px;margin:16px 0 4px}
+.news-body h3:first-child{margin-top:4px}
+.news-body h4{font-size:13px;margin:10px 0 2px;color:var(--muted);text-transform:uppercase;letter-spacing:.06em}
+.news-body p{margin:4px 0}
+.news-body ul,.news-body ol{margin:4px 0;padding-left:20px}
+.news-body li{margin:2px 0}
+.news-body .sub{display:inline;font-size:12.5px}
 @media (max-width:900px){.summary{grid-template-columns:1fr 1fr}}
 @media (max-width:520px){
   .summary{grid-template-columns:1fr}
@@ -465,13 +477,14 @@ body.fullview #view>.tablewrap{flex:1 1 auto;max-height:none;min-height:0}
   <header class="top">
     <div class="title-block">
       <p class="eyebrow" id="entity">Extracto de tesorería</p>
-      <h1>Estado de cuenta<span id="titleDir"></span></h1>
+      <h1>Estado de cuenta<span id="titleDir"></span> <button type="button" class="ver" id="verBtn" title="Ver novedades de esta versión">V0.15</button></h1>
       <p class="meta" id="meta"></p>
     </div>
     <div class="file-block">
       <div class="file-chip"><span class="file-name" id="fileName"></span><span class="file-sub" id="fileSub"></span></div>
       <button class="btn" id="themeBtn" type="button" aria-pressed="false"><svg class="i-moon" viewBox="0 0 24 24" aria-hidden="true"><path d="M20.5 14.2A8.5 8.5 0 0 1 9.8 3.5a8.5 8.5 0 1 0 10.7 10.7z"/></svg><svg class="i-sun" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="4.2"/><path d="M12 2v2.4M12 19.6V22M4.9 4.9l1.7 1.7M17.4 17.4l1.7 1.7M2 12h2.4M19.6 12H22M4.9 19.1l1.7-1.7M17.4 6.6l1.7-1.7"/></svg><span id="themeLbl">Modo oscuro</span></button>
       <button class="btn" id="guideBtn" aria-controls="guide" aria-expanded="false">Cómo funciona</button>
+      <button class="btn" id="newsBtn" type="button">Novedades</button><button type="button" class="tip" aria-label="Ayuda" data-tip="Qué es esta herramienta, cómo se usa y qué cambió en cada versión.">?</button>
       <button class="btn btn-icon" id="rulesBtn" type="button" title="Reglas de consolidación" aria-label="Reglas de consolidación"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.7 1.7 0 0 0 .3 1.8l.1.1a2 2 0 1 1-2.8 2.8l-.1-.1a1.7 1.7 0 0 0-1.8-.3 1.7 1.7 0 0 0-1 1.5V21a2 2 0 1 1-4 0v-.1a1.7 1.7 0 0 0-1.1-1.5 1.7 1.7 0 0 0-1.8.3l-.1.1a2 2 0 1 1-2.8-2.8l.1-.1a1.7 1.7 0 0 0 .3-1.8 1.7 1.7 0 0 0-1.5-1H3a2 2 0 1 1 0-4h.1a1.7 1.7 0 0 0 1.5-1.1 1.7 1.7 0 0 0-.3-1.8l-.1-.1a2 2 0 1 1 2.8-2.8l.1.1a1.7 1.7 0 0 0 1.8.3H9a1.7 1.7 0 0 0 1-1.5V3a2 2 0 1 1 4 0v.1a1.7 1.7 0 0 0 1 1.5 1.7 1.7 0 0 0 1.8-.3l.1-.1a2 2 0 1 1 2.8 2.8l-.1.1a1.7 1.7 0 0 0-.3 1.8V9a1.7 1.7 0 0 0 1.5 1H21a2 2 0 1 1 0 4h-.1a1.7 1.7 0 0 0-1.5 1z"/></svg></button>
       <span class="hio-head" id="hioHead"><span class="hio-k">Actualizar</span><button type="button" class="btn" data-hio-upd="cli">Clientes</button><button type="button" class="btn" data-hio-upd="prov">Proveedores</button><button type="button" class="tip" aria-label="Ayuda" data-tip="Baja de HIOFFICE el estado de cuenta actualizado de Clientes o de Proveedores y lo abre en lugar del actual. Puede tardar hasta un minuto.">?</button></span>
       <span class="inst" id="installBox" hidden><button type="button" class="btn" id="installBtn">Instalar en el celular</button><button type="button" class="tip" aria-label="Ayuda" data-tip="Agrega la página a la pantalla de inicio del celular, con su ícono, para abrirla como una app. Los extractos que abras quedan solo en el celular.">?</button></span>
@@ -621,6 +634,142 @@ body.fullview #view>.tablewrap{flex:1 1 auto;max-height:none;min-height:0}
     <div class="modal-actions"><button class="btn btn-primary" id="rulesClose">Listo</button></div>
   </div>
 </div>
+<div class="modal" id="newsModal" hidden>
+  <div class="modal-box news" role="dialog" aria-modal="true" aria-labelledby="newsTitle">
+    <span class="modal-title" id="newsTitle">Estado de Cuenta Chivi · V0.15</span>
+    <div class="news-body">
+      <h3>Qué es</h3>
+      <p>Una página que arma el estado de cuenta de proveedores o clientes a partir del CSV del extracto de tesorería. Se abre con doble clic en cualquier navegador, no necesita instalación y el archivo no se envía a ningún lado.</p>
+      <h3>Cómo se usa</h3>
+      <ol>
+        <li>Abrí la página y tocá «Actualizar Estado de Cuenta Clientes» o «… Proveedores» para traerlo directo de HIOFFICE. También podés arrastrar el CSV del extracto (o tocar «Elegir CSV»).</li>
+        <li>Filtrá con el buscador, el proveedor o cliente, el período y el almacén. «Más filtros» tiene el resto.</li>
+        <li>Revisá la pestaña Verificación: si todo está en verde, los importes cuadran con el extracto.</li>
+        <li>Exportá con Copiar, CSV, Excel o PDF. Respetan los filtros y columnas elegidos.</li>
+      </ol>
+      <p class="sub">Para seguir el proyecto: guardá cada versión como un archivo aparte (V0.15, V1.0…) y sumá sus cambios acá y en el LEEME.</p>
+      <h3>V0.15 <span class="sub">· noviembre 2026</span></h3>
+      <h4>Comodidad</h4>
+      <ul>
+        <li>App para el celular (Android): abrí https://rodrigopedettitrabajos-hub.github.io/estado-de-cuenta-app/ en Chrome y tocá «Instalar en el celular» (o menú ⋮ → «Instalar app»). Queda con su ícono en la pantalla de inicio, abre a pantalla completa y funciona sin internet.</li>
+        <li>En el celular se usa igual: «Actualizar» trae el extracto de HIOFFICE, o «Cargar CSV» abre uno guardado. Los datos quedan solo en ese celular.</li>
+        <li>Cada versión nueva se publica también ahí; el celular la toma solo la próxima vez que la abrís con internet.</li>
+      </ul>
+      <h4>Correcciones</h4>
+      <ul>
+        <li>En el celular, «Cargar CSV» ya no deja grisados los CSV que vienen de OneDrive o de un mail.</li>
+      </ul>
+      <h3>V0.14 <span class="sub">· noviembre 2026</span></h3>
+      <h4>Datos</h4>
+      <ul>
+        <li>Botones «Actualizar Estado de Cuenta Clientes» y «Actualizar Estado de Cuenta Proveedores»: la página le pide el extracto directo a HIOFFICE y lo abre, sin exportar el CSV a mano. Con datos abiertos, los mismos botones quedan arriba («Actualizar: Clientes / Proveedores»).</li>
+        <li>La primera vez pide el email y la contraseña de HIOFFICE. «Recordar en esta PC» viene destildado: tildalo solo en una PC propia, mejor con un usuario de HIOFFICE que solo pueda exportar.</li>
+        <li>Mientras trae los datos, una barra muestra qué está haciendo y el tiempo aproximado que falta. Aprende de lo que tardó las veces anteriores.</li>
+        <li>Si HIOFFICE contesta sin el archivo, reintenta solo hasta 3 veces. Si HIOFFICE no responde, lo avisa y no borra la contraseña guardada.</li>
+      </ul>
+      <h4>Comodidad</h4>
+      <ul>
+        <li>Plan B sin la página: «tools/hioffice/Traer datos HIOFFICE.bat» baja los dos extractos a la carpeta Exportaciones, y la página los ofrece abajo de los botones («O abrí lo bajado el…»).</li>
+      </ul>
+      <h4>Correcciones</h4>
+      <ul>
+        <li>Lo que llega de HIOFFICE siempre se abre como Clientes o Proveedores según el botón, aunque en Reglas se haya forzado otra cosa antes.</li>
+        <li>La prueba automática ahora simula a HIOFFICE (caído, contraseña mala, respuesta vacía).</li>
+      </ul>
+      <h3>V0.13 <span class="sub">· octubre 2026</span></h3>
+      <h4>Filtros</h4>
+      <ul>
+        <li>Sucursal: si el extracto trae la columna «Sucursal» (el de proveedores nuevo de HIOFFICE), cada sucursal aparece adentro de su empresa en el desplegable Almacén. Por ejemplo, Cielo Celeste se abre en «(sin sucursal)», «Aeropuerto» y «Otero». Se tilda, se destilda o se usa «solo» igual que el resto.</li>
+        <li>El botón Almacén, la columna Almacén de las tablas y los exportes muestran la sucursal elegida («Cielo Celeste - Otero»). Si el extracto no trae Sucursal, como el de clientes, todo sigue igual.</li>
+      </ul>
+      <h4>Correcciones</h4>
+      <ul>
+        <li>El PDF del estado de cuenta ahora dice qué almacenes estaban filtrados (antes solo lo decía el PDF de pendientes).</li>
+        <li>Si tenías un almacén apagado en la V0.12, al abrir esta versión también quedan apagadas sus sucursales.</li>
+        <li>La prueba automática ahora controla que elegir «solo» en cada almacén o sucursal no deje filas afuera.</li>
+      </ul>
+      <h3>V0.12 <span class="sub">· octubre 2026</span></h3>
+      <h4>Filtros</h4>
+      <ul>
+        <li>Almacén agrupado por empresa: los almacenes que se llaman «Empresa - Sucursal» (por ejemplo Carmitur - NM1, Carmitur - NM2) se juntan bajo la empresa. Tildá o destildá la empresa entera, o usá «solo» para quedarte con ella.</li>
+        <li>La flechita al lado de la empresa abre sus sucursales para elegirlas una por una. Si quedan algunas sí y otras no, la empresa se ve a medio tildar.</li>
+        <li>Los almacenes sin «-» (como Hioffice o W9) siguen sueltos. Si elegís una empresa entera, el botón y el PDF la nombran así («Carmitur»).</li>
+      </ul>
+      <h3>V0.11 <span class="sub">· octubre 2026</span></h3>
+      <h4>Correcciones</h4>
+      <ul>
+        <li>Copiar, CSV y Excel del Estado de cuenta salen en el mismo orden que la pantalla: si ordenás tocando un encabezado o agrupás (por proveedor o cliente, mes…), el archivo respeta ese orden y el saldo de cada bloque, igual que el PDF.</li>
+        <li>Pendientes sin pagar: si una nota de crédito tiene el mismo Nº que su factura, primero se descuenta de esa factura. Antes aparecían las dos como pendientes aunque se anularan entre sí.</li>
+        <li>En el detalle de un cheque, la columna del pago dice «S/N Cobro» o «S/N Pago», como en el resto de la página.</li>
+        <li>Más seguro al leer el CSV: un texto raro en la columna de número de fila ya no puede alterar la página.</li>
+        <li>Limpieza interna del código, sin cambios a la vista. La prueba automática ahora también controla que, en clientes, los pendientes sumen el saldo final.</li>
+      </ul>
+      <h3>V0.10 <span class="sub">· octubre 2026</span></h3>
+      <h4>Pendientes sin pagar</h4>
+      <ul>
+        <li>Nueva pestaña «Pendientes sin pagar»: cada factura o nota de crédito se cruza con las filas Cobro/Pago que traen su mismo Nº de factura (mismo proveedor o cliente y almacén) y se lista lo que falta pagar.</li>
+        <li>Muestra importe, pagado, pendiente, días desde el documento, estado y los pagos donde aparece. Arriba, el total pendiente y el documento más antiguo.</li>
+        <li>Estados: Sin pago, Pago parcial, NC sin aplicar y Revisar (a la vista), más Pagado de más, Cobrado sin N/S y Sin Nº de factura (se prenden con un toque).</li>
+        <li>Respeta los filtros de arriba, se ordena tocando las columnas y se exporta con Copiar, CSV y Excel (hoja «Pendientes sin pagar»).</li>
+        <li>PDF de pendientes: desde la pestaña, el botón PDF arma un documento para enviar con el total pendiente, el detalle por documento y, si hay varios, agrupado por proveedor o cliente con su subtotal. Elegido un proveedor o cliente, sale solo lo suyo.</li>
+      </ul>
+      <h3>V0.9 <span class="sub">· octubre 2026</span></h3>
+      <h4>Datos</h4>
+      <ul>
+        <li>Lee los extractos nuevos de HIOFFICE, con las columnas S/N Pago, S/N Cobro, Fecha Pago, Fecha Cobro y Cliente. Los extractos anteriores se siguen leyendo igual.</li>
+        <li>Los pagos y cobros usan su fecha real de pago o cobro cuando el extracto la trae: con ella se ordenan, se acumula el saldo y se aplican el filtro de Período y el agrupado por mes.</li>
+        <li>El título dice «Estado de cuenta - Proveedores» o «Estado de cuenta - Clientes» según el archivo cargado, también en la pestaña del navegador y en el PDF.</li>
+      </ul>
+      <h4>Tabla</h4>
+      <ul>
+        <li>Nueva columna «Fecha de pago» (o «Fecha de cobro» en clientes) en Pagos consolidados, Extracto original, el detalle de cada pago y las exportaciones.</li>
+        <li>El nombre fantasía va al lado del nombre, en letra más chica, y ya no ocupa una segunda línea.</li>
+      </ul>
+      <h3>V0.8 <span class="sub">· octubre 2026</span></h3>
+      <h4>Filtros más simples</h4>
+      <ul>
+        <li>Filtros en menús desplegables: Período, Almacén y «Más filtros» (Movimiento, Documento, Medio de pago, Pagos, Empleados). Los que están aplicados se pintan de azul.</li>
+        <li>Nuevo filtro por almacén, con nombres cortos («Carmitur - NM1», «Chivi Pi SAS»…). «solo» deja únicamente uno.</li>
+        <li>Buscador de proveedor o cliente: escribís parte del nombre o del RUT y filtra al instante.</li>
+        <li>Período con atajos: este mes, mes anterior, últimos 30 días o un rango personalizado.</li>
+        <li>Ayuda «?» en cada botón y filtro.</li>
+      </ul>
+      <h4>Datos</h4>
+      <ul>
+        <li>Los nombres escritos distinto con el mismo RUT se unifican en un solo proveedor o cliente (se puede apagar en Reglas ⚙).</li>
+        <li>La página dice «Cliente» o «Proveedor» según el tipo de extracto, también en Excel, CSV y PDF.</li>
+      </ul>
+      <h4>Tabla</h4>
+      <ul>
+        <li>Ordenar tocando el encabezado de cada columna (una vez, al revés, y vuelve al orden normal).</li>
+        <li>Columnas ajustadas a su contenido; el estado de cuenta entra entero en una pantalla común.</li>
+        <li>Menú «Columnas» para ocultar las que no uses.</li>
+        <li>Columna del proveedor o cliente fija al moverse de costado; nombres largos recortados con «…».</li>
+        <li>Franjas alternadas, signo $ en los importes y pagos en verde.</li>
+        <li>Botón «Pantalla completa» para ver solo la tabla.</li>
+      </ul>
+      <h4>Comodidad</h4>
+      <ul>
+        <li>Recuerda filtros, pestaña, orden y columnas para la próxima vez.</li>
+        <li>Arranca vacío: ya no lleva los datos adentro (pasó de 600 KB a 200 KB y no comparte información de clientes si lo pasás).</li>
+        <li>Reglas de consolidación en el engranaje ⚙ de arriba.</li>
+        <li>El cartel de explicación se puede cerrar con ×; vuelve desde «Cómo funciona».</li>
+        <li>Mucho más rápido con extractos grandes: la tabla se dibuja de a partes mientras bajás.</li>
+        <li>Este panel de Novedades.</li>
+      </ul>
+      <h4>Correcciones</h4>
+      <ul>
+        <li>En extractos de clientes, los pagos ya no aparecen como «incluye notas de crédito» cuando no tienen ninguna; el filtro «Con NC aplicada» también funciona bien en clientes.</li>
+      </ul>
+      <h3>V0.7</h3>
+      <ul>
+        <li>Estado de cuenta, pagos consolidados, medios de pago (con cheques), extracto original y verificación.</li>
+        <li>Exportación a Copiar, CSV, Excel y PDF.</li>
+      </ul>
+    </div>
+    <div class="modal-actions"><button class="btn btn-primary" id="newsClose">Cerrar</button></div>
+  </div>
+</div>
 <div class="tipbox" id="tipbox" role="tooltip" hidden></div>
 
 <script>
@@ -741,12 +890,13 @@ function applyWhoStatic() {
 }
 /* Neto pagado: Debe − Haber en proveedores, Haber − Debe en clientes */
 const netp = (d, h) => S.dir === 'cli' ? h - d : d - h;
+const BASE_TITLE = document.title;
 function applyDirTexts() {
   const d = DT();
   for (const k of ['debe', 'haber', 'saldo', 'kSaldo', 'kFact', 'kPag', 'pNeto', 'mImporte']) TIPS[k] = d[k];
   $('#guide1').textContent = d.guide1; $('#guide3').textContent = d.guide3;
   const dn = S.dir === 'cli' ? 'Clientes' : 'Proveedores';
-  $('#titleDir').textContent = ' - ' + dn; document.title = `Estado de Cuenta Chivi - ${dn}`;
+  $('#titleDir').textContent = ' - ' + dn; document.title = `${BASE_TITLE} - ${dn}`;
 }
 const HINTS = {
   pend: () => `Documentos que <b>no quedaron pagados</b>: se cruza cada factura con las filas Cobro/Pago que tienen su mismo <b>Nº de factura</b> (mismo proveedor o cliente y almacén). <b>Pendiente</b> es lo que falta pagar. Elegí arriba qué estados ver; los filtros generales también se aplican. Los días se cuentan hasta el ${isoDisp(S.isoMax)}, la última fecha del extracto.`,
@@ -2566,6 +2716,10 @@ $('#pop').addEventListener('click', e => {
 document.addEventListener('mousedown', e => { if (POP.kind && !e.target.closest('#pop') && !e.target.closest('.dd[data-dd]')) closePop(); });
 window.addEventListener('resize', closePop);
 window.addEventListener('scroll', e => { if (POP.kind && !(e.target.closest && e.target.closest('#pop'))) closePop(); }, true);
+const openNews = () => { $('#newsModal').hidden = false; $('#newsClose').focus(); };
+$('#newsBtn').addEventListener('click', openNews); $('#verBtn').addEventListener('click', openNews);
+$('#newsClose').addEventListener('click', () => { $('#newsModal').hidden = true; });
+$('#newsModal').addEventListener('click', e => { if (e.target.id === 'newsModal') $('#newsModal').hidden = true; });
 $('#rulesBtn').addEventListener('click', () => { $('#rulesModal').hidden = false; $('#rulesClose').focus(); });
 $('#rulesClose').addEventListener('click', () => { $('#rulesModal').hidden = true; });
 $('#rulesModal').addEventListener('click', e => { if (e.target.id === 'rulesModal') $('#rulesModal').hidden = true; });
@@ -2619,7 +2773,7 @@ $('#view').addEventListener('keydown', e => {
 });
 document.addEventListener('keydown', e => {
   if (e.key === '/' && !/input|textarea|select/i.test(document.activeElement.tagName)) { e.preventDefault(); setFiltersOpen(true); $('#q').focus(); }
-  if (e.key === 'Escape') { if (POP.kind) { const b = POP.btn; closePop(); b?.focus(); return; } $('#rulesModal').hidden = true; $('#hioModal').hidden = true; if (document.body.classList.contains('fullview') && $('#pdfModal').hidden && $('#copyModal').hidden && !tipEl) setFull(false); hideTip(); $('#copyModal').hidden = true; $('#pdfModal').hidden = true; }
+  if (e.key === 'Escape') { if (POP.kind) { const b = POP.btn; closePop(); b?.focus(); return; } $('#rulesModal').hidden = true; $('#newsModal').hidden = true; $('#hioModal').hidden = true; if (document.body.classList.contains('fullview') && $('#pdfModal').hidden && $('#copyModal').hidden && !tipEl) setFull(false); hideTip(); $('#copyModal').hidden = true; $('#pdfModal').hidden = true; }
 });
 $('#fileLabel').addEventListener('keydown', e => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); $('#fileInput').click(); } });
 

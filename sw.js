@@ -1,4 +1,5 @@
-/* Guarda la página en el celular para que abra sin internet. Con internet siempre trae la última versión.
+/* Guarda la página en el celular para que abra sin internet. Con internet trae la última versión;
+   si la señal es mala y tarda más de 4 segundos, abre la guardada (la nueva queda para la próxima vez).
    Solo toca archivos de este sitio: HIOFFICE y la librería de Excel pasan directo. Los extractos nunca pasan por acá. */
 const CACHE = 'estado-de-cuenta';
 const FILES = ['./', 'manifest.webmanifest', 'icon-192.png', 'icon-512.png'];
@@ -7,8 +8,11 @@ self.addEventListener('activate', e => e.waitUntil(self.clients.claim()));
 self.addEventListener('fetch', e => {
   const req = e.request;
   if (req.method !== 'GET' || new URL(req.url).origin !== location.origin) return;
-  e.respondWith(fetch(req).then(r => {
+  const net = fetch(req).then(r => {
     if (r.ok) { const copy = r.clone(); caches.open(CACHE).then(c => c.put(req, copy)); }
     return r;
-  }).catch(() => caches.match(req, { ignoreSearch: true }).then(r => r || caches.match('./'))));
+  });
+  const saved = () => caches.match(req, { ignoreSearch: true }).then(r => r || (req.mode === 'navigate' ? caches.match('./') : undefined));
+  const slow = new Promise(ok => setTimeout(ok, 4000));
+  e.respondWith(Promise.race([net, slow]).then(r => r || saved().then(c => c || net)).catch(() => saved().then(c => c || Response.error())));
 });
