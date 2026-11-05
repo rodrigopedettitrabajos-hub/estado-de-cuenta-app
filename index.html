@@ -1,5 +1,5 @@
 <!doctype html><html><head><meta charset=utf8><meta name=viewport content="width=device-width,initial-scale=1,viewport-fit=cover"><style>:root{color-scheme:light;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}html{scroll-padding-top:env(safe-area-inset-top,0px)}body{margin:0;padding:0;font:14px -apple-system,BlinkMacSystemFont,sans-serif;background:#fff;color:#000}img{max-width:100%}[hidden]:not([hidden=until-found i]){display:none!important}</style></head><body>
-<title>Estado de Cuenta Chivi V0.15</title>
+<title>Estado de Cuenta Chivi V0.16</title>
 <meta name="theme-color" content="#2E43A3">
 <meta name="claude:viewport-fit-sides" content="cover">
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -477,7 +477,7 @@ body.fullview #view>.tablewrap{flex:1 1 auto;max-height:none;min-height:0}
   <header class="top">
     <div class="title-block">
       <p class="eyebrow" id="entity">Extracto de tesorería</p>
-      <h1>Estado de cuenta<span id="titleDir"></span> <button type="button" class="ver" id="verBtn" title="Ver novedades de esta versión">V0.15</button></h1>
+      <h1>Estado de cuenta<span id="titleDir"></span> <button type="button" class="ver" id="verBtn" title="Ver novedades de esta versión">V0.16</button></h1>
       <p class="meta" id="meta"></p>
     </div>
     <div class="file-block">
@@ -636,7 +636,7 @@ body.fullview #view>.tablewrap{flex:1 1 auto;max-height:none;min-height:0}
 </div>
 <div class="modal" id="newsModal" hidden>
   <div class="modal-box news" role="dialog" aria-modal="true" aria-labelledby="newsTitle">
-    <span class="modal-title" id="newsTitle">Estado de Cuenta Chivi · V0.15</span>
+    <span class="modal-title" id="newsTitle">Estado de Cuenta Chivi · V0.16</span>
     <div class="news-body">
       <h3>Qué es</h3>
       <p>Una página que arma el estado de cuenta de proveedores o clientes a partir del CSV del extracto de tesorería. Se abre con doble clic en cualquier navegador, no necesita instalación y el archivo no se envía a ningún lado.</p>
@@ -647,7 +647,18 @@ body.fullview #view>.tablewrap{flex:1 1 auto;max-height:none;min-height:0}
         <li>Revisá la pestaña Verificación: si todo está en verde, los importes cuadran con el extracto.</li>
         <li>Exportá con Copiar, CSV, Excel o PDF. Respetan los filtros y columnas elegidos.</li>
       </ol>
-      <p class="sub">Para seguir el proyecto: guardá cada versión como un archivo aparte (V0.15, V1.0…) y sumá sus cambios acá y en el LEEME.</p>
+      <p class="sub">Para seguir el proyecto: guardá cada versión como un archivo aparte (V0.16, V1.0…) y sumá sus cambios acá y en el LEEME.</p>
+      <h3>V0.16 <span class="sub">· noviembre 2026</span></h3>
+      <h4>Tabla</h4>
+      <ul>
+        <li>Columna «Medio Pago Documento» en el estado de cuenta: en las facturas dice <b>Contado</b> si no les queda importe pendiente y <b>Crédito</b> si les queda. Sale de la columna «Importe pendiente» del extracto; si el extracto no la trae, no aparece.</li>
+        <li>La columna «Medio de pago» ahora se llama «Medio de pago cobro» con clientes y «Medio de pago pago» con proveedores.</li>
+        <li>«Pendientes sin pagar» tiene una columna con el medio de pago de los cobros o pagos de cada documento.</li>
+      </ul>
+      <h4>Filtros</h4>
+      <ul>
+        <li>Con <b>proveedores</b>, «Cobro sin N/S» (filtro Movimiento) arranca siempre destildado, aunque en clientes lo hayas tildado. Lo que elijas en clientes se sigue recordando y lo de proveedores no lo pisa.</li>
+      </ul>
       <h3>V0.15 <span class="sub">· noviembre 2026</span></h3>
       <h4>Comodidad</h4>
       <ul>
@@ -823,6 +834,8 @@ const TIPS = {
   kCons: 'Cuántas filas Cobro/Pago tenía el extracto y en cuántas líneas de pago quedaron. «Cuadra» indica que pasaron todos los controles de la pestaña Verificación.',
   cats: 'Tipos de línea del estado de cuenta. Tocá un chip para ocultarlo; tocalo de nuevo para volver a incluirlo.',
   tipos: 'Tipo de documento del extracto. Un pago se muestra si alguna de sus facturas es del tipo elegido.',
+  mdoc: 'Solo en facturas. Contado: el extracto dice que no le queda importe pendiente. Crédito: le queda un importe pendiente (columna Importe pendiente del extracto).',
+  pMedio: 'Cómo se pagó este documento: el medio de las filas Cobro/Pago que traen su mismo Nº de factura. Vacío si todavía no tiene pagos o el extracto no trae el medio.',
   medio: 'Cómo se hizo el pago, según la columna Medio Pago del extracto. En cheques se agrega el número, que sale de Documento Referencia.',
   medios: 'Tocá un medio para ocultar sus pagos; tocalo de nuevo para volver a incluirlos. Las facturas no cambian.',
   mPagos: 'Cuántos pagos (N/S Pago consolidados) se hicieron con este medio.',
@@ -889,10 +902,15 @@ function applyWhoStatic() {
   }
 }
 /* Neto pagado: Debe − Haber en proveedores, Haber − Debe en clientes */
+/* Medio de pago de las filas Cobro/Pago y «Medio Pago Documento» de las facturas (de la columna Importe pendiente: 0 = Contado, otro = Crédito) */
+const MEDIO_T = () => S.dir === 'cli' ? 'Medio de pago cobro' : 'Medio de pago pago';
+const isFactura = L => L.cat.startsWith('c:') && norm(L.cat.slice(2)) === 'factura';
+const medioDoc = L => !isFactura(L) || L.rows.every(x => x.ipend == null) ? '' : L.rows.some(x => x.ipend) ? 'Crédito' : 'Contado';
 const netp = (d, h) => S.dir === 'cli' ? h - d : d - h;
 const BASE_TITLE = document.title;
 function applyDirTexts() {
   const d = DT();
+  for (const t in COLS) for (const c of COLS[t]) if (c.k === 'medio') c.t = MEDIO_T();
   for (const k of ['debe', 'haber', 'saldo', 'kSaldo', 'kFact', 'kPag', 'pNeto', 'mImporte']) TIPS[k] = d[k];
   $('#guide1').textContent = d.guide1; $('#guide3').textContent = d.guide3;
   const dn = S.dir === 'cli' ? 'Clientes' : 'Proveedores';
@@ -900,7 +918,7 @@ function applyDirTexts() {
 }
 const HINTS = {
   pend: () => `Documentos que <b>no quedaron pagados</b>: se cruza cada factura con las filas Cobro/Pago que tienen su mismo <b>Nº de factura</b> (mismo proveedor o cliente y almacén). <b>Pendiente</b> es lo que falta pagar. Elegí arriba qué estados ver; los filtros generales también se aplican. Los días se cuentan hasta el ${isoDisp(S.isoMax)}, la última fecha del extracto.`,
-  estado: () => `Cada <b>factura</b> es una línea. Las filas Cobro/Pago con el mismo N/S Pago se suman en una línea <span class="pill p-pago">Pago</span>: tocala para ver de qué filas del extracto sale. <span class="pill p-suelto">Sin N/S</span> es un cobro sin referencia que queda solo. El <b>saldo</b> se acumula línea por línea (Debe − Haber).${S.hasMedio ? ' La columna <b>Medio de pago</b> dice cómo se hizo cada pago; en cheques muestra el número.' : ''}${F.groupBy !== 'none' ? ' Tocá el encabezado gris de cada bloque para abrirlo o cerrarlo.' : ''}${F.offCats.has('suelto') && S.catDefs.some(c => c.k === 'suelto') ? ' Los <b>cobros sin N/S</b> están ocultos: activá «Cobro sin N/S» en Movimiento para sumarlos; con ellos el saldo coincide con el del extracto.' : ''}`,
+  estado: () => `Cada <b>factura</b> es una línea. Las filas Cobro/Pago con el mismo N/S Pago se suman en una línea <span class="pill p-pago">Pago</span>: tocala para ver de qué filas del extracto sale. <span class="pill p-suelto">Sin N/S</span> es un cobro sin referencia que queda solo. El <b>saldo</b> se acumula línea por línea (Debe − Haber).${S.hasMedio ? ` La columna <b>${MEDIO_T()}</b> dice cómo se hizo cada ${S.dir === 'cli' ? 'cobro' : 'pago'}; en cheques muestra el número.` : ''}${S.hasIPend ? ' <b>Medio Pago Documento</b> dice si cada factura fue Contado o Crédito.' : ''}${F.groupBy !== 'none' ? ' Tocá el encabezado gris de cada bloque para abrirlo o cerrarlo.' : ''}${F.offCats.has('suelto') && S.catDefs.some(c => c.k === 'suelto') ? ' Los <b>cobros sin N/S</b> están ocultos: activá «Cobro sin N/S» en Movimiento para sumarlos; con ellos el saldo coincide con el del extracto.' : ''}`,
   pagos: () => `Un renglón por cada N/S Pago. <b>Filas</b> es cuántas filas del extracto se sumaron y <b>Neto pagado</b> es ${DT().neto}. <span class="pill p-ok">Cuadra</span> confirma que el importe es igual a la suma de esas filas. Tocá un pago para ver el detalle.`,
   extracto: () => `Las filas tal como vienen en el CSV, sin consolidar. La columna <b>Va a</b> muestra en qué pago quedó cada cobro: tocala para abrir ese pago.`,
   medios: () => `Cuántos <b>pagos</b> se hicieron con cada medio. Un pago es un N/S Pago consolidado, aunque junte varias facturas. Tocá una tarjeta o una fila para ver sus pagos; en <b>Cheque</b> la lista es cheque por cheque, con el número de Documento Referencia. Los filtros de arriba también se aplican acá.`,
@@ -959,6 +977,7 @@ function mapColumns(h) {
     else if (n.startsWith('rut')) set('rut');
     else if (/^fecha (de )?(pago|cobro)/.test(n)) { set('fpago'); if (S.fpLabel == null || m.fpago === i) S.fpLabel = /cobro/.test(n) ? 'Fecha de cobro' : 'Fecha de pago'; }
     else if (n.startsWith('fecha')) set('fecha');
+    else if (n.startsWith('importe pendiente')) set('ipend');
     else if (n.startsWith('medio') || n.startsWith('forma de pago') || n.startsWith('forma pago')) set('medio');
     else if (n.includes('n/s') || n.includes('s/n') || n.includes('s pago') || /^(nro|numero|n°|nº) (de )?(pago|cobro)/.test(n)) { set('ns'); if (m.ns === i) S.nsLabel = String(raw).trim(); }
     else if (n.includes('referencia')) set('docref');
@@ -1004,7 +1023,7 @@ function loadText(text, name) {
   if (miss.length) throw new Error(`No encontré la columna ${miss.join(', ')} en la primera fila. Revisá que sea el extracto de tesorería con sus encabezados originales.`);
   const data = rows.slice(1);
   S.raw = { rows: data, m, dec: detectDec(data, m) };
-  S.hasMedio = m.medio != null; S.hasTcli = m.tcli != null; S.hasFPago = m.fpago != null;
+  S.hasMedio = m.medio != null; S.hasTcli = m.tcli != null; S.hasFPago = m.fpago != null; S.hasIPend = m.ipend != null;
   if (!S.fpLabel) S.fpLabel = 'Fecha de pago';
   const nsCol = COLS.extracto.find(c => c.k === 'ns'); if (nsCol) nsCol.t = S.nsLabel;
   const fpCol = COLS.pagos.concat(COLS.extracto).filter(c => c.k === 'fpago'); fpCol.forEach(c => c.t = S.fpLabel);
@@ -1034,6 +1053,7 @@ function build() {
       fpago: isCobro ? g(r, 'fpago') : '', isoPago: isCobro ? toISO(g(r, 'fpago')) : '',
       tcli: g(r, 'tcli'), emp: m.tcli != null && /^emplead/.test(norm(g(r, 'tcli'))),
       medioRaw: isCobro ? g(r, 'medio') : '', medio: isCobro && S.hasMedio ? medioInfo(g(r, 'medio')) : null,
+      ipend: g(r, 'ipend') === '' ? null : toCents(g(r, 'ipend'), dec),
       tipo: g(r, 'tipo') || '(sin tipo)', concepto, debe: toCents(g(r, 'debe'), dec), haber: toCents(g(r, 'haber'), dec),
       saldo: g(r, 'saldo') ? toCents(g(r, 'saldo'), dec) : null, cobro: isCobro, ref: isCobro ? parseRef(ns) : null });
   });
@@ -1303,6 +1323,7 @@ function buildPend(movs) {
   for (const mv of S.pend) {
     const refs = [...new Set(mv.pend.pays.map(x => x.ref ? x.ref.label : 'Sin N/S'))];
     mv.pend.refs = refs.join(', ');
+    mv.pend.medio = [...new Set(mv.pend.pays.filter(x => x.medio && x.medio.key !== '_none').map(x => x.medio.fam))].join(', ');
     mv.pend.dias = mv.iso && S.isoMaxAll ? Math.round((Date.parse(S.isoMaxAll) - Date.parse(mv.iso)) / 864e5) : null;
   }
   const cnt = new Map(); for (const mv of S.pend) cnt.set(mv.pend.est, (cnt.get(mv.pend.est) || 0) + 1);
@@ -1570,7 +1591,7 @@ function chequesExport() {
 const COLS = {
   estado: [
     { k: 'fecha', t: 'Fecha', w: 104, tip: 'fecha' }, { k: 'mov', t: 'Movimiento', w: 130, tip: 'mov' }, { k: 'prov', t: 'Proveedor o Cliente', w: 290 }, { k: 'rut', t: 'RUT/CI', w: 134 },
-    { k: 'doc', t: 'Documento', w: 178, tip: 'doc' }, { k: 'medio', t: 'Medio de pago', w: 168, tip: 'medio' },
+    { k: 'doc', t: 'Documento', w: 178, tip: 'doc' }, { k: 'mdoc', t: 'Medio Pago Documento', w: 186, tip: 'mdoc' }, { k: 'medio', t: 'Medio de pago', w: 168, tip: 'medio' },
     { k: 'tipo', t: 'Tipo documento', w: 178, tip: 'tipo' },
     { k: 'debe', t: 'Debe', w: 120, num: 1, tip: 'debe' }, { k: 'haber', t: 'Haber', w: 120, num: 1, tip: 'haber' },
     { k: 'saldo', t: 'Saldo', w: 140, num: 1, tip: 'saldo' }, { k: 'filas', t: 'Filas extracto', w: 136, tip: 'filas' }],
@@ -1589,23 +1610,23 @@ COLS.pend = [
   { k: 'fecha', t: 'Fecha', w: 104 }, { k: 'prov', t: 'Proveedor o Cliente', w: 290 }, { k: 'rut', t: 'RUT/CI', w: 134 }, { k: 'fac', t: 'Nº factura', w: 130 },
   { k: 'tipo', t: 'Tipo documento', w: 150 }, { k: 'alm', t: 'Almacén', w: 150 },
   { k: 'imp', t: 'Importe', w: 130, num: 1, tip: 'pImporte' }, { k: 'pag', t: 'Pagado', w: 130, num: 1, tip: 'pPagado' }, { k: 'pend', t: 'Pendiente', w: 140, num: 1, cls: 'saldo', tip: 'pPend' },
-  { k: 'dias', t: 'Días', w: 80, num: 1, tip: 'pDias' }, { k: 'est', t: 'Estado', w: 150, tip: 'pEstados' }, { k: 'pagos', t: 'Pagos', w: 150, tip: 'pPagos' }, { k: 'fila', t: 'Fila', w: 80 }];
+  { k: 'dias', t: 'Días', w: 80, num: 1, tip: 'pDias' }, { k: 'est', t: 'Estado', w: 150, tip: 'pEstados' }, { k: 'pagos', t: 'Pagos', w: 150, tip: 'pPagos' }, { k: 'medio', t: 'Medio de pago', w: 160, tip: 'pMedio' }, { k: 'fila', t: 'Fila', w: 80 }];
 S.hidden = { estado: new Set(), pagos: new Set(), extracto: new Set(), pend: new Set() };
 try { const po = JSON.parse(store.get('pendientes-ocultos') || 'null'); if (Array.isArray(po)) S.pendOff = new Set(po); } catch (e) {}
 try { const saved = JSON.parse(store.get('columnas-ocultas') || '{}'); for (const t in S.hidden) if (Array.isArray(saved[t])) saved[t].forEach(k => { if (COLS[t].some(c => c.k === k)) S.hidden[t].add(k); }); } catch (e) {}
 const saveHidden = () => store.set('columnas-ocultas', JSON.stringify(Object.fromEntries(Object.entries(S.hidden).map(([t, s]) => [t, [...s]]))));
-const availCols = tab => COLS[tab].filter(c => (S.hasMedio || c.k !== 'medio') && (S.hasFPago || c.k !== 'fpago'));
+const availCols = tab => COLS[tab].filter(c => (S.hasMedio || c.k !== 'medio') && (S.hasFPago || c.k !== 'fpago') && (S.hasIPend || c.k !== 'mdoc'));
 const visCols = tab => availCols(tab).filter(c => !S.hidden[tab].has(c.k));
 const visKeys = tab => new Set(visCols(tab).map(c => c.k));
 /* Orden tocando el encabezado: 1.ª vez ascendente (o mayor primero en importes), 2.ª al revés, 3.ª vuelve al orden normal */
 const lineDoc = L => L.cat === 'pago' ? L.ref : L.rows[0].fac;
 const SORTV = {
-  estado: { fecha: L => L.dIso, mov: L => movName(L), prov: L => L.prov, rut: L => L.rut, doc: L => lineDoc(L), medio: L => medioLabel(L), tipo: L => L.tipos.join(', '),
+  estado: { fecha: L => L.dIso, mov: L => movName(L), prov: L => L.prov, rut: L => L.rut, doc: L => lineDoc(L), medio: L => medioLabel(L), mdoc: L => medioDoc(L), tipo: L => L.tipos.join(', '),
     debe: L => L.debe, haber: L => L.haber, saldo: (L, s) => s, filas: L => L.rows.length },
   pagos: { ref: L => L.cat === 'pago' ? [L.serie, +L.numero || 0] : ['~', 0], prov: L => L.prov, medio: L => medioLabel(L), filas: L => L.rows.length, fpago: L => L.isoPago, fechas: L => L.iso,
     debe: L => L.debe, haber: L => L.haber, neto: L => netp(L.debe, L.haber), control: L => L.cat === 'suelto' ? 1 : (S.checks.per.get(L.id) || {}).ok ? 0 : 2 },
   pend: { fecha: mv => mv.iso, prov: mv => mv.prov, rut: mv => mv.rut, fac: mv => mv.fac, tipo: mv => mv.tipo, alm: mv => almLabel(mv.alk), imp: mv => mv.pend.imp, pag: mv => mv.pend.pag,
-    pend: mv => mv.pend.pend, dias: mv => mv.pend.dias ?? -1, est: mv => PEND_EST.findIndex(d => d.k === mv.pend.est), pagos: mv => mv.pend.refs, fila: mv => mv.i },
+    pend: mv => mv.pend.pend, dias: mv => mv.pend.dias ?? -1, est: mv => PEND_EST.findIndex(d => d.k === mv.pend.est), pagos: mv => mv.pend.refs, medio: mv => mv.pend.medio, fila: mv => mv.i },
   extracto: { fila: mv => mv.i, fecha: mv => mv.iso, prov: mv => mv.prov, fac: mv => mv.fac, ns: mv => mv.ref ? [mv.ref.serie, +mv.ref.numero || 0] : ['~', 0], medio: mv => mv.medioRaw, docref: mv => mv.docref, fpago: mv => mv.isoPago,
     concepto: mv => mv.concepto, tipo: mv => mv.tipo, debe: mv => mv.debe, haber: mv => mv.haber, saldo: mv => mv.saldo ?? 0, va: mv => mv.line.ref || '~' }
 };
@@ -1661,6 +1682,7 @@ const ESTADO_CELL = {
   rut: L => `<td class="mono">${L.rut ? esc(L.rut) : '<span class="zero">—</span>'}</td>`,
   doc: L => `<td>${docCell(L)}</td>`,
   medio: L => `<td>${medioCell(L)}</td>`,
+  mdoc: L => `<td>${medioDoc(L) ? esc(medioDoc(L)) : '<span class="zero">—</span>'}</td>`,
   tipo: L => `<td>${tipoCell(L)}</td>`,
   debe: L => `<td class="num debe">${amtH(L.debe)}</td>`,
   haber: L => `<td class="num haber">${amtH(L.haber)}</td>`,
@@ -1768,6 +1790,7 @@ const PEND_CELL = {
   dias: mv => `<td class="num">${mv.pend.dias == null ? '<span class="zero">—</span>' : int(mv.pend.dias)}</td>`,
   est: mv => `<td>${pendPill(mv)}</td>`,
   pagos: mv => `<td class="mono">${mv.pend.refs ? esc(mv.pend.refs) : '<span class="zero">—</span>'}</td>`,
+  medio: mv => `<td>${mv.pend.medio ? esc(mv.pend.medio) : '<span class="zero">—</span>'}</td>`,
   fila: mv => `<td class="mono">#${esc(mv.n)}</td>`
 };
 function renderPend() {
@@ -2092,8 +2115,12 @@ function resetFilters(full) {
 /* ---------- recordar filtros entre sesiones ---------- */
 function saveState() {
   if (!S.loaded) return;
+  const offCats = [...F.offCats].filter(k => k !== 'suelto');
+  // «Cobro sin N/S» se recuerda solo desde clientes: con proveedores se guarda lo que había elegido en clientes
+  const prev = S.dir === 'prov' ? readSaved() : null;
+  if (prev ? !Array.isArray(prev.offCats) || prev.offCats.includes('suelto') : F.offCats.has('suelto')) offCats.push('suelto');
   store.set('filtros', JSON.stringify({ q: F.q, prov: F.prov, desde: F.desde, hasta: F.hasta, emp: F.emp, onlyEmp: F.onlyEmp, multi: F.multi, nc: F.nc,
-    groupBy: F.groupBy, offCats: [...F.offCats], offTipos: [...F.offTipos], offMedios: [...F.offMedios], offAlms: [...F.offAlms], almSuc: true,
+    groupBy: F.groupBy, offCats, offTipos: [...F.offTipos], offMedios: [...F.offMedios], offAlms: [...F.offAlms], almSuc: true,
     tab: S.tab, colSort: S.colSort, forceDir: S.forceDir, byRut: S.byRut, splitProv: S.splitProv }));
 }
 function readSaved() { try { return JSON.parse(store.get('filtros') || 'null'); } catch (e) { return null; } }
@@ -2103,6 +2130,7 @@ function restoreState(st) {
   Object.assign(F, { prov: st.prov || '', desde: st.desde || '', hasta: st.hasta || '', emp: st.emp !== false, onlyEmp: !!st.onlyEmp, multi: !!st.multi, nc: !!st.nc,
     groupBy: st.groupBy || 'none' });
   if (Array.isArray(st.offCats)) F.offCats = new Set(st.offCats);
+  if (S.dir === 'prov') F.offCats.add('suelto'); // con proveedores los cobros sin N/S arrancan siempre ocultos (aunque en clientes se hayan activado)
   F.offTipos = new Set((st.offTipos || []).filter(t => S.tiposAll.some(x => x[0] === t)));
   F.offMedios = new Set((st.offMedios || []).filter(k => S.medioDefs.some(d => d.k === k)));
   // Filtros guardados antes de la columna Sucursal (V0.12): el almacén apagado apaga también sus sucursales
@@ -2126,7 +2154,8 @@ function estadoExport() {
     ['Proveedor o Cliente', 'prov', L => L.prov], ['Nombre fantasía', 'prov', L => L.fant], ...(S.hasTcli ? [['Tipo cliente', 'prov', L => L.tcli]] : []), ['RUT/CI', 'rut', L => L.rut],
     ['Documento', 'doc', L => L.cat === 'pago' ? L.ref : L.rows[0].fac], ['N/S Pago', 'doc', L => L.cat === 'pago' ? L.ref : (L.rows[0].ns || '')],
     ['Facturas incluidas', 'doc', L => L.rows.map(x => x.fac).join(', ')],
-    ['Medio de pago', 'medio', L => L.medio ? (L.medio.multi ? 'Varios: ' + L.medioFams.join(', ') : L.medio.fam) : ''], ['Nº cheque / referencia', 'medio', L => L.docrefs.join(', ')],
+    ['Medio Pago Documento', 'mdoc', L => medioDoc(L)],
+    [MEDIO_T(), 'medio', L => L.medio ? (L.medio.multi ? 'Varios: ' + L.medioFams.join(', ') : L.medio.fam) : ''], ['Nº cheque / referencia', 'medio', L => L.docrefs.join(', ')],
     ['Tipo documento', 'tipo', L => L.tipos.join(', ')],
     ['Cant. filas', 'filas', L => L.rows.length], ['Filas del extracto', 'filas', L => L.rows.map(x => '#' + x.n).join(', ')],
     ['Debe', 'debe', L => ({ c: L.debe })], ['Haber', 'haber', L => ({ c: L.haber })], ['Saldo', 'saldo', (L, sal) => ({ c: sal })]
@@ -2135,7 +2164,7 @@ function estadoExport() {
 function pagosExport() {
   return exportTable('pagos', [
     ['Pago', 'ref', L => L.cat === 'pago' ? L.ref : 'Sin N/S'], ['Serie', 'ref', L => L.serie || ''], ['Número', 'ref', L => L.numero || ''],
-    ['Proveedor o Cliente', 'prov', L => L.prov], ['Medio de pago', 'medio', L => L.medio ? (L.medio.multi ? 'Varios: ' + L.medioFams.join(', ') : L.medio.fam) : ''], ['Nº cheque / referencia', 'medio', L => L.docrefs.join(', ')],
+    ['Proveedor o Cliente', 'prov', L => L.prov], [MEDIO_T(), 'medio', L => L.medio ? (L.medio.multi ? 'Varios: ' + L.medioFams.join(', ') : L.medio.fam) : ''], ['Nº cheque / referencia', 'medio', L => L.docrefs.join(', ')],
     ['Cant. filas', 'filas', L => L.rows.length], ['Filas del extracto', 'filas', L => L.rows.map(x => '#' + x.n).join(', ')],
     ...(S.hasFPago ? [[S.fpLabel, 'fpago', L => L.isoPagoMin && L.isoPagoMin !== L.isoPago ? `${isoDisp(L.isoPagoMin)} – ${isoDisp(L.isoPago)}` : isoDisp(L.isoPago)]] : []),
     ['Facturas incluidas', 'filas', L => L.rows.map(x => x.fac).join(', ')], ['Primera factura', 'fechas', L => isoDisp(L.isoMin)], ['Última factura', 'fechas', L => isoDisp(L.iso)],
@@ -2148,13 +2177,13 @@ function pendExport() {
     ['Fecha', 'fecha', mv => mv.fecha], ['Proveedor o Cliente', 'prov', mv => mv.prov], ['RUT/CI', 'rut', mv => mv.rut], ['Nº factura', 'fac', mv => mv.fac],
     ['Tipo documento', 'tipo', mv => mv.tipo], ['Almacén', 'alm', mv => mv.alk],
     ['Importe', 'imp', mv => ({ c: mv.pend.imp })], ['Pagado', 'pag', mv => ({ c: mv.pend.pag })], ['Pendiente', 'pend', mv => ({ c: mv.pend.pend })],
-    ['Días', 'dias', mv => mv.pend.dias ?? ''], ['Estado', 'est', mv => PEND_EST.find(d => d.k === mv.pend.est).label], ['Pagos', 'pagos', mv => mv.pend.refs], ['Fila', 'fila', mv => mv.n]
+    ['Días', 'dias', mv => mv.pend.dias ?? ''], ['Estado', 'est', mv => PEND_EST.find(d => d.k === mv.pend.est).label], ['Pagos', 'pagos', mv => mv.pend.refs], [MEDIO_T(), 'medio', mv => mv.pend.medio], ['Fila', 'fila', mv => mv.n]
   ], pendList().map(mv => [mv]), 'pendientes-sin-pagar', 'Pendientes sin pagar');
 }
 function extractoExport(movs) {
   return exportTable('extracto', [
     ['Fila', 'fila', mv => mv.n], ['Fecha', 'fecha', mv => mv.fecha], ['Proveedor o Cliente', 'prov', mv => mv.prov], ['Nombre fantasía', 'prov', mv => mv.fant], ...(S.hasTcli ? [['Tipo cliente', 'prov', mv => mv.tcli]] : []), ['RUT/CI', 'prov', mv => mv.rut],
-    ['Nº factura', 'fac', mv => mv.fac], [S.nsLabel, 'ns', mv => mv.ns], ...(S.hasFPago ? [[S.fpLabel, 'fpago', mv => mv.fpago]] : []), ['Medio pago', 'medio', mv => mv.medioRaw], ['Documento referencia', 'docref', mv => mv.docref], ['Tipo documento', 'tipo', mv => mv.tipo], ['Concepto', 'concepto', mv => mv.concepto],
+    ['Nº factura', 'fac', mv => mv.fac], [S.nsLabel, 'ns', mv => mv.ns], ...(S.hasFPago ? [[S.fpLabel, 'fpago', mv => mv.fpago]] : []), [MEDIO_T(), 'medio', mv => mv.medioRaw], ['Documento referencia', 'docref', mv => mv.docref], ['Tipo documento', 'tipo', mv => mv.tipo], ['Concepto', 'concepto', mv => mv.concepto],
     ['Debe', 'debe', mv => ({ c: mv.debe })], ['Haber', 'haber', mv => ({ c: mv.haber })], ['Saldo extracto', 'saldo', mv => mv.saldo == null ? '' : { c: mv.saldo }],
     ['Línea del estado de cuenta', 'va', mv => mv.line.cat === 'pago' ? mv.line.ref : 'Línea propia']
   ], (movs || extractoList()).map(mv => [mv]), 'extracto-trazabilidad', 'Extracto y trazabilidad');
@@ -2339,12 +2368,12 @@ function describeFilters(pend) {
 /* Columnas del estado de cuenta que entran en la hoja: si no hay lugar, se omiten de a una empezando por las menos necesarias */
 function pdfCols(orient) {
   const land = orient !== 'portrait';
-  const PW = land ? { fecha: 54, mov: 56, prov: null, rut: 66, doc: 90, medio: 76, tipo: 88, debe: 68, haber: 68, saldo: 74, filas: 58 }
-    : { fecha: 46, mov: 40, prov: null, rut: 62, doc: 80, medio: 64, tipo: 74, debe: 60, haber: 60, saldo: 66, filas: 52 };
+  const PW = land ? { fecha: 54, mov: 56, prov: null, rut: 66, doc: 90, medio: 76, mdoc: 62, tipo: 88, debe: 68, haber: 68, saldo: 74, filas: 58 }
+    : { fecha: 46, mov: 40, prov: null, rut: 62, doc: 80, medio: 64, mdoc: 52, tipo: 74, debe: 60, haber: 60, saldo: 66, filas: 52 };
   const UW = (land ? 841.89 : 595.28) - 68, MIN = land ? 130 : 110;
   let keys = visCols('estado').map(c => c.k).filter(k => k in PW);
   const fixed = ks => ks.reduce((a, k) => a + (PW[k] || 0), 0), omitted = [];
-  for (const k of ['filas', 'tipo', 'medio', 'mov', 'rut', 'doc', 'fecha']) {
+  for (const k of ['filas', 'tipo', 'mdoc', 'medio', 'mov', 'rut', 'doc', 'fecha']) {
     if (UW - fixed(keys) >= (keys.includes('prov') ? MIN : 0)) break;
     if (keys.includes(k)) { keys = keys.filter(x => x !== k); omitted.push(COLS.estado.find(c => c.k === k).t); }
   }
@@ -2448,17 +2477,17 @@ function buildPDF(opts) {
     const legend = 'Cada documento se cruzó con las filas Cobro/Pago del extracto que traen su mismo Nº de factura. Pendiente = Importe − Pagado; en notas de crédito, lo que falta descontar (en negativo). Días: desde la fecha del documento hasta la última fecha del extracto.';
     for (const l of wrap(legend, false, 7.3, UW)) { doc.text(M, y + 7, l, { size: 7.3, color: PC.muted }); y += 10; }
     y += 8;
-    const PW = land ? { fecha: 54, prov: null, rut: 66, fac: 76, tipo: 80, alm: 84, imp: 68, pag: 64, pend: 70, dias: 34, est: 70, pagos: 70, fila: 40 }
-      : { fecha: 46, prov: null, rut: 60, fac: 66, tipo: 70, alm: 70, imp: 60, pag: 56, pend: 62, dias: 30, est: 62, pagos: 60, fila: 34 };
+    const PW = land ? { fecha: 54, prov: null, rut: 66, fac: 76, tipo: 80, alm: 84, imp: 68, pag: 64, pend: 70, dias: 34, est: 70, pagos: 70, medio: 76, fila: 40 }
+      : { fecha: 46, prov: null, rut: 60, fac: 66, tipo: 70, alm: 70, imp: 60, pag: 56, pend: 62, dias: 30, est: 62, pagos: 60, medio: 66, fila: 34 };
     const grouped = !F.prov && new Set(list.map(mv => mv.prov)).size > 1;
     let keys = visCols('pend').map(c => c.k).filter(k => k in PW && !((grouped || F.prov) && k === 'prov'));
     const fixedW = ks => ks.reduce((a, k) => a + (PW[k] || 0), 0);
-    for (const k of ['fila', 'pagos', 'rut', 'alm', 'tipo', 'est', 'pag', 'dias']) {
+    for (const k of ['fila', 'medio', 'pagos', 'rut', 'alm', 'tipo', 'est', 'pag', 'dias']) {
       if (UW - fixedW(keys) >= (keys.includes('prov') ? 120 : 0)) break;
       keys = keys.filter(x => x !== k);
     }
     if (!keys.includes('prov')) { const fk = ['tipo', 'alm', 'fac', 'pagos', 'fecha'].find(k => keys.includes(k)); if (fk) PW[fk] = null; }
-    const PT = { fecha: 'Fecha', prov: 'Proveedor o Cliente', rut: 'RUT/CI', fac: 'Nº factura', tipo: 'Tipo documento', alm: 'Almacén', imp: 'Importe', pag: 'Pagado', pend: 'Pendiente', dias: 'Días', est: 'Estado', pagos: 'Pagos', fila: 'Fila' };
+    const PT = { fecha: 'Fecha', prov: 'Proveedor o Cliente', rut: 'RUT/CI', fac: 'Nº factura', tipo: 'Tipo documento', alm: 'Almacén', imp: 'Importe', pag: 'Pagado', pend: 'Pendiente', dias: 'Días', est: 'Estado', pagos: 'Pagos', medio: MEDIO_T(), fila: 'Fila' };
     const RIGHT = ['imp', 'pag', 'pend', 'dias'];
     const cols = keys.map(k => ({ t: WHO(PT[k]), w: PW[k], a: RIGHT.includes(k) ? 'r' : undefined }));
     const AMT = ['imp', 'pag', 'pend'], lead = keys.findIndex(k => AMT.includes(k));
@@ -2469,7 +2498,7 @@ function buildPDF(opts) {
     const rowOf = mv => {
       const v = { fecha: [mv.fecha], prov: [mv.prov + (mv.emp ? ' (empleado)' : '')], rut: [mv.rut, { color: PC.muted }], fac: [mv.fac], tipo: [mv.tipo, { color: PC.muted }], alm: [almLabel(mv.alk), { color: PC.muted }],
         imp: [money(mv.pend.imp)], pag: [amtP(mv.pend.pag), { color: PC.ok }], pend: [money(mv.pend.pend), { bold: true }], dias: [mv.pend.dias == null ? '' : int(mv.pend.dias), { color: PC.muted }],
-        est: [estLbl(mv), { bold: true, size: 6.6, color: estCol(mv) }], pagos: [mv.pend.refs, { color: PC.muted }], fila: ['#' + mv.n, { color: PC.muted }] };
+        est: [estLbl(mv), { bold: true, size: 6.6, color: estCol(mv) }], pagos: [mv.pend.refs, { color: PC.muted }], medio: [mv.pend.medio, { color: PC.muted }], fila: ['#' + mv.n, { color: PC.muted }] };
       return { type: 'row', cells: keys.map(k => v[k][0]), st: keys.map(k => v[k][1] || {}) };
     };
     const rows = [];
@@ -2511,7 +2540,7 @@ function buildPDF(opts) {
 
   /* Estado de cuenta: las columnas visibles en pantalla (en vertical, además, sin Tipo ni Filas) */
   const { keys, PW } = pdfCols(opts.orient);
-  const PT = { fecha: 'Fecha', mov: land ? 'Movimiento' : 'Mov.', prov: 'Proveedor o Cliente', rut: 'RUT/CI', doc: 'Documento', medio: 'Medio de pago', tipo: 'Tipo documento', debe: 'Debe', haber: 'Haber', saldo: 'Saldo', filas: 'Filas extracto' };
+  const PT = { fecha: 'Fecha', mov: land ? 'Movimiento' : 'Mov.', prov: 'Proveedor o Cliente', rut: 'RUT/CI', doc: 'Documento', medio: MEDIO_T(), mdoc: land ? 'Medio Pago Doc.' : 'M. pago doc.', tipo: 'Tipo documento', debe: 'Debe', haber: 'Haber', saldo: 'Saldo', filas: 'Filas extracto' };
   const AMT = ['debe', 'haber', 'saldo'];
   const cols = keys.map(k => ({ t: PT[k], w: PW[k], a: AMT.includes(k) ? 'r' : undefined }));
   const amtSt = { debe: { bold: true, color: PC.debe }, haber: { bold: true, color: PC.haber }, saldo: { bold: true } };
@@ -2532,7 +2561,7 @@ function buildPDF(opts) {
       const v = {
         fecha: [L.fecha], mov: [isP ? 'Pago' : isS ? 'Sin N/S' : L.cat.slice(2), { bold: isP || isS, color: isP ? PC.accent : isS ? PC.warn : PC.muted }],
         prov: [L.prov + (L.emp ? ' (empleado)' : '')], rut: [L.rut, { color: PC.muted }], doc: [isP ? `${L.ref} (${n === 1 ? 'fact. ' + L.rows[0].fac : n + ' fact.'})` : L.rows[0].fac],
-        medio: [medioLabel(L), { color: L.medio && L.medio.key !== '_none' ? PC.ink : PC.muted }],
+        medio: [medioLabel(L), { color: L.medio && L.medio.key !== '_none' ? PC.ink : PC.muted }], mdoc: [medioDoc(L)],
         tipo: [(L.tipos.length === 1 ? L.tipos[0] : 'Varios tipos') + (L.hasNC ? ' + NC' : ''), { color: PC.muted }],
         debe: [amtP(L.debe), { color: PC.debe }], haber: [amtP(L.haber), { color: PC.haber }], saldo: [money(saldo)], filas: [filasTxt(L), { color: PC.muted }]
       };
