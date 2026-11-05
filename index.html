@@ -1,5 +1,5 @@
 <!doctype html><html><head><meta charset=utf8><meta name=viewport content="width=device-width,initial-scale=1,viewport-fit=cover"><style>:root{color-scheme:light;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}html{scroll-padding-top:env(safe-area-inset-top,0px)}body{margin:0;padding:0;font:14px -apple-system,BlinkMacSystemFont,sans-serif;background:#fff;color:#000}img{max-width:100%}[hidden]:not([hidden=until-found i]){display:none!important}</style></head><body>
-<title>Estado de Cuenta Chivi V0.15</title>
+<title>Estado de Cuenta Chivi V0.16</title>
 <meta name="theme-color" content="#2E43A3">
 <meta name="claude:viewport-fit-sides" content="cover">
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -477,7 +477,7 @@ body.fullview #view>.tablewrap{flex:1 1 auto;max-height:none;min-height:0}
   <header class="top">
     <div class="title-block">
       <p class="eyebrow" id="entity">Extracto de tesorería</p>
-      <h1>Estado de cuenta<span id="titleDir"></span> <button type="button" class="ver" id="verBtn" title="Ver novedades de esta versión">V0.15</button></h1>
+      <h1>Estado de cuenta<span id="titleDir"></span> <button type="button" class="ver" id="verBtn" title="Ver novedades de esta versión">V0.16</button></h1>
       <p class="meta" id="meta"></p>
     </div>
     <div class="file-block">
@@ -636,7 +636,7 @@ body.fullview #view>.tablewrap{flex:1 1 auto;max-height:none;min-height:0}
 </div>
 <div class="modal" id="newsModal" hidden>
   <div class="modal-box news" role="dialog" aria-modal="true" aria-labelledby="newsTitle">
-    <span class="modal-title" id="newsTitle">Estado de Cuenta Chivi · V0.15</span>
+    <span class="modal-title" id="newsTitle">Estado de Cuenta Chivi · V0.16</span>
     <div class="news-body">
       <h3>Qué es</h3>
       <p>Una página que arma el estado de cuenta de proveedores o clientes a partir del CSV del extracto de tesorería. Se abre con doble clic en cualquier navegador, no necesita instalación y el archivo no se envía a ningún lado.</p>
@@ -647,7 +647,12 @@ body.fullview #view>.tablewrap{flex:1 1 auto;max-height:none;min-height:0}
         <li>Revisá la pestaña Verificación: si todo está en verde, los importes cuadran con el extracto.</li>
         <li>Exportá con Copiar, CSV, Excel o PDF. Respetan los filtros y columnas elegidos.</li>
       </ol>
-      <p class="sub">Para seguir el proyecto: guardá cada versión como un archivo aparte (V0.15, V1.0…) y sumá sus cambios acá y en el LEEME.</p>
+      <p class="sub">Para seguir el proyecto: guardá cada versión como un archivo aparte (V0.16, V1.0…) y sumá sus cambios acá y en el LEEME.</p>
+      <h3>V0.16 <span class="sub">· noviembre 2026</span></h3>
+      <h4>Filtros</h4>
+      <ul>
+        <li>Con <b>proveedores</b>, «Cobro sin N/S» (filtro Movimiento) arranca siempre destildado, aunque en clientes lo hayas tildado. Lo que elijas en clientes se sigue recordando y lo de proveedores no lo pisa.</li>
+      </ul>
       <h3>V0.15 <span class="sub">· noviembre 2026</span></h3>
       <h4>Comodidad</h4>
       <ul>
@@ -2092,8 +2097,12 @@ function resetFilters(full) {
 /* ---------- recordar filtros entre sesiones ---------- */
 function saveState() {
   if (!S.loaded) return;
+  const offCats = [...F.offCats].filter(k => k !== 'suelto');
+  // «Cobro sin N/S» se recuerda solo desde clientes: con proveedores se guarda lo que había elegido en clientes
+  const prev = S.dir === 'prov' ? readSaved() : null;
+  if (prev ? !Array.isArray(prev.offCats) || prev.offCats.includes('suelto') : F.offCats.has('suelto')) offCats.push('suelto');
   store.set('filtros', JSON.stringify({ q: F.q, prov: F.prov, desde: F.desde, hasta: F.hasta, emp: F.emp, onlyEmp: F.onlyEmp, multi: F.multi, nc: F.nc,
-    groupBy: F.groupBy, offCats: [...F.offCats], offTipos: [...F.offTipos], offMedios: [...F.offMedios], offAlms: [...F.offAlms], almSuc: true,
+    groupBy: F.groupBy, offCats, offTipos: [...F.offTipos], offMedios: [...F.offMedios], offAlms: [...F.offAlms], almSuc: true,
     tab: S.tab, colSort: S.colSort, forceDir: S.forceDir, byRut: S.byRut, splitProv: S.splitProv }));
 }
 function readSaved() { try { return JSON.parse(store.get('filtros') || 'null'); } catch (e) { return null; } }
@@ -2103,6 +2112,7 @@ function restoreState(st) {
   Object.assign(F, { prov: st.prov || '', desde: st.desde || '', hasta: st.hasta || '', emp: st.emp !== false, onlyEmp: !!st.onlyEmp, multi: !!st.multi, nc: !!st.nc,
     groupBy: st.groupBy || 'none' });
   if (Array.isArray(st.offCats)) F.offCats = new Set(st.offCats);
+  if (S.dir === 'prov') F.offCats.add('suelto'); // con proveedores los cobros sin N/S arrancan siempre ocultos (aunque en clientes se hayan activado)
   F.offTipos = new Set((st.offTipos || []).filter(t => S.tiposAll.some(x => x[0] === t)));
   F.offMedios = new Set((st.offMedios || []).filter(k => S.medioDefs.some(d => d.k === k)));
   // Filtros guardados antes de la columna Sucursal (V0.12): el almacén apagado apaga también sus sucursales
