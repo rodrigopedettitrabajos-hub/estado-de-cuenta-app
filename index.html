@@ -1,5 +1,6 @@
-<!doctype html><html><head><meta charset=utf8><meta name=viewport content="width=device-width,initial-scale=1,viewport-fit=cover"><style>:root{color-scheme:light;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}html{scroll-padding-top:env(safe-area-inset-top,0px)}body{margin:0;padding:0;font:14px -apple-system,BlinkMacSystemFont,sans-serif;background:#fff;color:#000}img{max-width:100%}[hidden]:not([hidden=until-found i]){display:none!important}</style></head><body>
-<title>Estado de Cuenta Chivi V0.16</title>
+<!doctype html><html><head><meta charset=utf8><meta name=viewport content="width=device-width,initial-scale=1,viewport-fit=cover"><style>:root{color-scheme:light;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}html{scroll-padding-top:env(safe-area-inset-top,0px)}body{margin:0;padding:0;font:14px -apple-system,BlinkMacSystemFont,sans-serif;background:#fff;color:#000}img{max-width:100%}[hidden]:not([hidden=until-found i]){display:none!important}</style><meta name="app-build" content="20261111212337">
+</head><body>
+<title>Estado de Cuenta Chivi V0.17</title>
 <meta name="theme-color" content="#2E43A3">
 <meta name="claude:viewport-fit-sides" content="cover">
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -345,6 +346,8 @@ table.medios>tbody>.detail>td{padding-left:24px}
 .hio-btns{display:flex;flex-wrap:wrap;gap:8px;justify-content:center;align-items:center}
 .hio-head{display:inline-flex;align-items:center;gap:6px}
 .inst{display:inline-flex;align-items:center}
+.upd{position:fixed;top:calc(12px + env(safe-area-inset-top,0px));left:50%;transform:translateX(-50%);width:max-content;z-index:70;display:flex;align-items:center;gap:8px;flex-wrap:wrap;justify-content:center;max-width:calc(100vw - 32px);padding:10px 14px;border:1px solid var(--accent);border-radius:12px;background:var(--surface);box-shadow:var(--shadow);font-size:13.5px}
+.upd[hidden]{display:none}
 .hio-head .hio-k{color:var(--muted);font-size:12px;font-weight:600;letter-spacing:.04em}
 body.no-data .hio-head{display:none}
 .hio-old{font-size:12.5px;color:var(--muted)}
@@ -477,7 +480,7 @@ body.fullview #view>.tablewrap{flex:1 1 auto;max-height:none;min-height:0}
   <header class="top">
     <div class="title-block">
       <p class="eyebrow" id="entity">Extracto de tesorería</p>
-      <h1>Estado de cuenta<span id="titleDir"></span> <button type="button" class="ver" id="verBtn" title="Ver novedades de esta versión">V0.16</button></h1>
+      <h1>Estado de cuenta<span id="titleDir"></span> <button type="button" class="ver" id="verBtn" title="Ver novedades de esta versión">V0.17</button></h1>
       <p class="meta" id="meta"></p>
     </div>
     <div class="file-block">
@@ -487,7 +490,7 @@ body.fullview #view>.tablewrap{flex:1 1 auto;max-height:none;min-height:0}
       <button class="btn" id="newsBtn" type="button">Novedades</button><button type="button" class="tip" aria-label="Ayuda" data-tip="Qué es esta herramienta, cómo se usa y qué cambió en cada versión.">?</button>
       <button class="btn btn-icon" id="rulesBtn" type="button" title="Reglas de consolidación" aria-label="Reglas de consolidación"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.7 1.7 0 0 0 .3 1.8l.1.1a2 2 0 1 1-2.8 2.8l-.1-.1a1.7 1.7 0 0 0-1.8-.3 1.7 1.7 0 0 0-1 1.5V21a2 2 0 1 1-4 0v-.1a1.7 1.7 0 0 0-1.1-1.5 1.7 1.7 0 0 0-1.8.3l-.1.1a2 2 0 1 1-2.8-2.8l.1-.1a1.7 1.7 0 0 0 .3-1.8 1.7 1.7 0 0 0-1.5-1H3a2 2 0 1 1 0-4h.1a1.7 1.7 0 0 0 1.5-1.1 1.7 1.7 0 0 0-.3-1.8l-.1-.1a2 2 0 1 1 2.8-2.8l.1.1a1.7 1.7 0 0 0 1.8.3H9a1.7 1.7 0 0 0 1-1.5V3a2 2 0 1 1 4 0v.1a1.7 1.7 0 0 0 1 1.5 1.7 1.7 0 0 0 1.8-.3l.1-.1a2 2 0 1 1 2.8 2.8l-.1.1a1.7 1.7 0 0 0-.3 1.8V9a1.7 1.7 0 0 0 1.5 1H21a2 2 0 1 1 0 4h-.1a1.7 1.7 0 0 0-1.5 1z"/></svg></button>
       <span class="hio-head" id="hioHead"><span class="hio-k">Actualizar</span><button type="button" class="btn" data-hio-upd="cli">Clientes</button><button type="button" class="btn" data-hio-upd="prov">Proveedores</button><button type="button" class="tip" aria-label="Ayuda" data-tip="Baja de HIOFFICE el estado de cuenta actualizado de Clientes o de Proveedores y lo abre en lugar del actual. Puede tardar hasta un minuto.">?</button></span>
-      <span class="inst" id="installBox" hidden><button type="button" class="btn" id="installBtn">Instalar en el celular</button><button type="button" class="tip" aria-label="Ayuda" data-tip="Agrega la página a la pantalla de inicio del celular, con su ícono, para abrirla como una app. Los extractos que abras quedan solo en el celular.">?</button></span>
+      <span class="inst" id="installBox" hidden><button type="button" class="btn" id="installBtn">Instalar como app</button><button type="button" class="tip" aria-label="Ayuda" data-tip="Agrega la página como una app, con su ícono, en el celular o en la PC, para abrirla directo. Las versiones nuevas llegan solas. Los extractos que abras quedan solo en ese equipo.">?</button></span>
       <label class="btn btn-primary" for="fileInput" tabindex="0" id="fileLabel">Cargar CSV</label>
       <input type="file" id="fileInput" accept=".csv,.txt,text/csv,text/comma-separated-values,text/plain,application/vnd.ms-excel" hidden>
     </div>
@@ -579,6 +582,7 @@ body.fullview #view>.tablewrap{flex:1 1 auto;max-height:none;min-height:0}
 
 <div class="drop" id="drop" hidden><div class="drop-box"><b>Soltá el CSV acá</b><span>Se reemplaza el extracto actual. El archivo se procesa en esta página.</span></div></div>
 <div class="toast" id="toast" role="status" aria-live="polite" hidden></div>
+<div class="upd" id="updBar" role="status" hidden><span>Hay una versión nueva de la página<span id="updVer"></span>.</span><button type="button" class="btn btn-primary" id="updBtn">Actualizar ahora</button><button type="button" class="tip" aria-label="Ayuda" data-tip="Recarga la página con la última versión. El extracto que tenés abierto se cierra: lo volvés a abrir o actualizar después. Si no tocás nada, la versión nueva aparece la próxima vez que abras la página.">?</button><button type="button" class="btn" id="updLater">Más tarde</button></div>
 <div class="hio-prog" id="hioProg" role="status" aria-live="polite" hidden><b id="hioProgT"></b><div class="hio-bar" role="progressbar" aria-valuemin="0" aria-valuemax="100" id="hioBar"><i id="hioBarFill"></i></div><div class="hio-prog-row"><span id="hioProgPhase"></span><span id="hioProgTime"></span></div></div>
 <div class="modal" id="copyModal" hidden>
   <div class="modal-box" role="dialog" aria-modal="true" aria-labelledby="copyTitle">
@@ -636,7 +640,7 @@ body.fullview #view>.tablewrap{flex:1 1 auto;max-height:none;min-height:0}
 </div>
 <div class="modal" id="newsModal" hidden>
   <div class="modal-box news" role="dialog" aria-modal="true" aria-labelledby="newsTitle">
-    <span class="modal-title" id="newsTitle">Estado de Cuenta Chivi · V0.16</span>
+    <span class="modal-title" id="newsTitle">Estado de Cuenta Chivi · V0.17</span>
     <div class="news-body">
       <h3>Qué es</h3>
       <p>Una página que arma el estado de cuenta de proveedores o clientes a partir del CSV del extracto de tesorería. Se abre con doble clic en cualquier navegador, no necesita instalación y el archivo no se envía a ningún lado.</p>
@@ -647,7 +651,15 @@ body.fullview #view>.tablewrap{flex:1 1 auto;max-height:none;min-height:0}
         <li>Revisá la pestaña Verificación: si todo está en verde, los importes cuadran con el extracto.</li>
         <li>Exportá con Copiar, CSV, Excel o PDF. Respetan los filtros y columnas elegidos.</li>
       </ol>
-      <p class="sub">Para seguir el proyecto: guardá cada versión como un archivo aparte (V0.16, V1.0…) y sumá sus cambios acá y en el LEEME.</p>
+      <p class="sub">Para seguir el proyecto: guardá cada versión como un archivo aparte (V0.17, V1.0…) y sumá sus cambios acá y en el LEEME.</p>
+      <h3>V0.17 <span class="sub">· noviembre 2026</span></h3>
+      <h4>Comodidad</h4>
+      <ul>
+        <li>La página publicada en internet (https://rodrigopedettitrabajos-hub.github.io/estado-de-cuenta-app/) se actualiza sola: si no tenés un extracto abierto, se recarga con la versión nueva; si tenés uno abierto, aparece el cartel «Hay una versión nueva» con «Actualizar ahora» o «Más tarde».</li>
+        <li>Ya no queda mostrando una versión vieja guardada en el navegador: con internet siempre abre la última.</li>
+        <li>«Instalar en el celular» ahora se llama «Instalar como app» y también funciona en la PC con Chrome o Edge.</li>
+        <li>Abierta con doble clic desde la carpeta no cambia nada.</li>
+      </ul>
       <h3>V0.16 <span class="sub">· noviembre 2026</span></h3>
       <h4>Tabla</h4>
       <ul>
@@ -3015,6 +3027,24 @@ if (location.protocol !== 'file:') {
   addEventListener('beforeinstallprompt', e => { e.preventDefault(); ask = e; $('#installBox').hidden = false; });
   addEventListener('appinstalled', () => { $('#installBox').hidden = true; toast('Listo: quedó en la pantalla de inicio'); });
   $('#installBtn').addEventListener('click', async () => { if (!ask) return; ask.prompt(); await ask.userChoice; ask = null; $('#installBox').hidden = true; });
+  /* Versión nueva: publicar_web.py marca cada publicación (meta app-build) y deja version.json al lado.
+     Se revisa al abrir, al volver a la pestaña y cada 30 min. Sin extracto abierto recarga sola; con extracto, avisa. */
+  const build = document.querySelector('meta[name="app-build"]')?.content;
+  if (build) {
+    let seen = '';
+    const ss = { get: k => { try { return sessionStorage.getItem(k); } catch (e) { return null; } }, set: (k, v) => { try { sessionStorage.setItem(k, v); } catch (e) {} } };
+    const check = async () => {
+      if (document.hidden) return;
+      let v; try { const r = await fetch('version.json?t=' + Date.now(), { cache: 'no-store' }); if (!r.ok) return; v = await r.json(); } catch (e) { return; }
+      if (!v?.build || v.build === build || v.build === seen) return;
+      seen = v.build;
+      if (!S.loaded && ss.get('recarga-version') !== v.build) { ss.set('recarga-version', v.build); location.reload(); return; }
+      $('#updVer').textContent = v.label ? ` (${v.label})` : ''; $('#updBar').hidden = false;
+    };
+    $('#updBtn').addEventListener('click', () => location.reload());
+    $('#updLater').addEventListener('click', () => { $('#updBar').hidden = true; });
+    check(); setInterval(check, 30 * 60e3); document.addEventListener('visibilitychange', check);
+  }
 }
 $('#startDrop').addEventListener('keydown', e => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); $('#fileInput').click(); } });
 </script>

@@ -1,4 +1,4 @@
-# Versión para instalar en el celular (Android)
+# Versión web (PC y celular)
 
 Publicada en https://rodrigopedettitrabajos-hub.github.io/estado-de-cuenta-app/ (repo público `estado-de-cuenta-app`, GitHub Pages).
 
@@ -8,7 +8,9 @@ como si fuera una app (ícono en la pantalla de inicio, abre a pantalla completa
 | Archivo | Qué es |
 |---|---|
 | `manifest.webmanifest` | Nombre, ícono y colores de la app. |
-| `sw.js` | Guarda la página en el celular para abrirla sin internet. Con internet trae siempre la última. No guarda extractos. |
+| `sw.js` | Guarda la página para abrirla sin internet. Con internet trae siempre la última. No guarda extractos. |
+| `version.json` | Lo escribe `publicar_web.py`: marca de la última publicación. La página abierta lo revisa y, si hay versión nueva, se recarga sola (sin extracto abierto) o muestra «Hay una versión nueva». |
+| `prueba/` | Página de prueba (copia del `_test`) para probar cambios en internet antes de sacar versión. No darla a clientes. |
 | `icon-192.png`, `icon-512.png` | Ícono. |
 
 **Al pasar una versión a producción** también se publica acá:
@@ -19,7 +21,10 @@ La página la guarda como `index.html`. Los celulares la toman solos la próxima
 Abierta desde un archivo no se puede. La carpeta no tiene datos: los extractos se abren en el celular
 («Cargar CSV» o «Actualizar» desde HIOFFICE) y no salen de ahí. **Nunca poner CSV en esta carpeta.**
 
-**Instalar en el celular:** abrir la dirección en Chrome → botón «Instalar en el celular» (o menú ⋮ →
+**Link para clientes:** https://rodrigopedettitrabajos-hub.github.io/estado-de-cuenta-app/ (siempre la última versión).
+**Prueba:** `python tools/publicar_web.py "Test/Estado de Cuenta_test.html" ../estado-de-cuenta-app/prueba` → https://rodrigopedettitrabajos-hub.github.io/estado-de-cuenta-app/prueba/
+
+**Instalar (celular o PC con Chrome/Edge):** abrir la dirección en Chrome → botón «Instalar como app» (o menú ⋮ →
 «Instalar app» / «Agregar a la pantalla principal»).
 
 Abierta con doble clic en la PC, la página funciona igual que siempre (lo de la app se activa solo en internet).
