@@ -1,6 +1,6 @@
-<!doctype html><html><head><meta charset=utf8><meta name=viewport content="width=device-width,initial-scale=1,viewport-fit=cover"><style>:root{color-scheme:light;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}html{scroll-padding-top:env(safe-area-inset-top,0px)}body{margin:0;padding:0;font:14px -apple-system,BlinkMacSystemFont,sans-serif;background:#fff;color:#000}img{max-width:100%}[hidden]:not([hidden=until-found i]){display:none!important}</style><meta name="app-build" content="20261111212337">
+<!doctype html><html><head><meta charset=utf8><meta name=viewport content="width=device-width,initial-scale=1,viewport-fit=cover"><style>:root{color-scheme:light;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}html{scroll-padding-top:env(safe-area-inset-top,0px)}body{margin:0;padding:0;font:14px -apple-system,BlinkMacSystemFont,sans-serif;background:#fff;color:#000}img{max-width:100%}[hidden]:not([hidden=until-found i]){display:none!important}</style><meta name="app-build" content="20261111213643">
 </head><body>
-<title>Estado de Cuenta Chivi V0.17</title>
+<title>Estado de Cuenta Chivi V0.18</title>
 <meta name="theme-color" content="#2E43A3">
 <meta name="claude:viewport-fit-sides" content="cover">
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -480,7 +480,7 @@ body.fullview #view>.tablewrap{flex:1 1 auto;max-height:none;min-height:0}
   <header class="top">
     <div class="title-block">
       <p class="eyebrow" id="entity">Extracto de tesorería</p>
-      <h1>Estado de cuenta<span id="titleDir"></span> <button type="button" class="ver" id="verBtn" title="Ver novedades de esta versión">V0.17</button></h1>
+      <h1>Estado de cuenta<span id="titleDir"></span> <button type="button" class="ver" id="verBtn" title="Ver novedades de esta versión">V0.18</button></h1>
       <p class="meta" id="meta"></p>
     </div>
     <div class="file-block">
@@ -640,7 +640,7 @@ body.fullview #view>.tablewrap{flex:1 1 auto;max-height:none;min-height:0}
 </div>
 <div class="modal" id="newsModal" hidden>
   <div class="modal-box news" role="dialog" aria-modal="true" aria-labelledby="newsTitle">
-    <span class="modal-title" id="newsTitle">Estado de Cuenta Chivi · V0.17</span>
+    <span class="modal-title" id="newsTitle">Estado de Cuenta Chivi · V0.18</span>
     <div class="news-body">
       <h3>Qué es</h3>
       <p>Una página que arma el estado de cuenta de proveedores o clientes a partir del CSV del extracto de tesorería. Se abre con doble clic en cualquier navegador, no necesita instalación y el archivo no se envía a ningún lado.</p>
@@ -651,7 +651,12 @@ body.fullview #view>.tablewrap{flex:1 1 auto;max-height:none;min-height:0}
         <li>Revisá la pestaña Verificación: si todo está en verde, los importes cuadran con el extracto.</li>
         <li>Exportá con Copiar, CSV, Excel o PDF. Respetan los filtros y columnas elegidos.</li>
       </ol>
-      <p class="sub">Para seguir el proyecto: guardá cada versión como un archivo aparte (V0.17, V1.0…) y sumá sus cambios acá y en el LEEME.</p>
+      <p class="sub">Para seguir el proyecto: guardá cada versión como un archivo aparte (V0.18, V1.0…) y sumá sus cambios acá y en el LEEME.</p>
+      <h3>V0.18 <span class="sub">· noviembre 2026</span></h3>
+      <h4>Correcciones</h4>
+      <ul>
+        <li>Exportar a Excel es más seguro: la página revisa que la librería de Excel que baja de internet sea exactamente la original; si alguien la hubiera modificado, no se usa y el Excel no se genera.</li>
+      </ul>
       <h3>V0.17 <span class="sub">· noviembre 2026</span></h3>
       <h4>Comodidad</h4>
       <ul>
@@ -2244,9 +2249,10 @@ async function offer(filename, data) {
     else toast('No se pudo descargar en esta vista. Usá «Copiar tabla».');
   }
 }
+/* SheetJS de cdnjs con integrity: si el archivo del CDN fuera alterado, el navegador no lo ejecuta (y el Excel avisa que no se pudo). */
 function loadXLSX() {
   if (window.XLSX) return Promise.resolve(window.XLSX);
-  return new Promise((res, rej) => { const s = document.createElement('script'); s.src = 'https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js'; s.onload = () => res(window.XLSX); s.onerror = () => rej(new Error('load')); document.head.appendChild(s); });
+  return new Promise((res, rej) => { const s = document.createElement('script'); s.src = 'https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js'; s.integrity = 'sha512-r22gChDnGvBylk90+2e/ycr3RVrDi8DIOkIGNhJlKfuyQM4tIRAI062MaV8sfjQKYVGjOBaZBOA87z+IhZE9DA=='; s.crossOrigin = 'anonymous'; s.onload = () => res(window.XLSX); s.onerror = () => rej(new Error('load')); document.head.appendChild(s); });
 }
 async function exportXLSX() {
   const btn = $('#xlsxBtn'); btn.disabled = true; const prev = btn.textContent; btn.textContent = 'Preparando…';
