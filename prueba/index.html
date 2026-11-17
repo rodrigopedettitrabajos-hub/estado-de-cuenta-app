@@ -1,4 +1,4 @@
-<!doctype html><html><head><meta charset=utf8><meta name=viewport content="width=device-width,initial-scale=1,viewport-fit=cover"><style>:root{color-scheme:light;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}html{scroll-padding-top:env(safe-area-inset-top,0px)}body{margin:0;padding:0;font:14px -apple-system,BlinkMacSystemFont,sans-serif;background:#fff;color:#000}img{max-width:100%}[hidden]:not([hidden=until-found i]){display:none!important}</style><meta name="app-build" content="20261117170950">
+<!doctype html><html><head><meta charset=utf8><meta name=viewport content="width=device-width,initial-scale=1,viewport-fit=cover"><style>:root{color-scheme:light;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}html{scroll-padding-top:env(safe-area-inset-top,0px)}body{margin:0;padding:0;font:14px -apple-system,BlinkMacSystemFont,sans-serif;background:#fff;color:#000}img{max-width:100%}[hidden]:not([hidden=until-found i]){display:none!important}</style><meta name="app-build" content="20261117174848">
 </head><body>
 <title>Estado de Cuenta Chivi</title>
 <meta name="theme-color" content="#2E43A3">
@@ -161,6 +161,15 @@ table.ledger{table-layout:auto}
 
 .ledger>tbody>tr.ln>td .sub{white-space:normal;min-width:9ch}
 .ledger td .almc{display:block;white-space:normal;min-width:9ch;max-width:24ch}
+/* Que las tablas entren en el ancho sin deslizar: los textos pueden ir en dos renglones; importes, fechas y RUT no se cortan */
+.ledger>tbody>tr.ln>td:not(.num):not(.c-fecha):not(.mono){white-space:normal}
+.ledger>tbody>tr.ln>td.wrapc{white-space:normal;word-spacing:-.1em;min-width:12ch}
+.ledger>thead>tr>th,.ledger>tbody>tr.ln>td,.ledger>tfoot>tr>td{padding-inline:8px}
+.ledger>thead>tr>th{letter-spacing:.01em;font-size:10.5px}
+.ledger>tbody>tr.ln>td.num,.ledger>tfoot>tr>td.num{font-size:12px}
+.ledger>thead>tr>th .lw{white-space:normal}
+.ledger>tbody>tr.ln>td .pill{white-space:normal;text-align:center}
+.ledger>tbody>tr.ln>td.c-fecha,.ledger>tbody>tr.ln>td.mono{font-size:12px}
 .ledger>thead>tr>th,.ledger>tbody>tr.ln>td{padding-inline:10px}
 .ledger thead th{position:sticky;top:0;z-index:2;background:var(--surface);text-align:left;font-size:11px;font-weight:600;letter-spacing:.06em;text-transform:uppercase;color:var(--muted);padding:9px 10px;border-bottom:1px solid var(--line-strong);white-space:nowrap}
 .ledger td{padding:7px 10px;border-bottom:1px solid var(--line);vertical-align:top}
@@ -378,7 +387,7 @@ body.no-data .summary,body.no-data .tabs,body.no-data .panel,body.no-data .file-
 .ledger tr.sec-head>td.stick{background:var(--sunken-2)}
 .prov{display:flex;flex-wrap:wrap;align-items:baseline;min-width:0;row-gap:2px}
 /* En la columna del cliente el nombre no fija el ancho: usa el espacio que sobre y se corta con … si no entra */
-.ledger td.stick{min-width:210px}
+.ledger td.stick{min-width:136px}
 .ledger td.stick>.prov,.ledger td.stick>.sub{width:0;min-width:100%}
 .ledger td.stick .pn{max-width:none}
 .prov .pn{min-width:0;max-width:210px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
@@ -1653,7 +1662,7 @@ const PEND_CELL = {
   pend: mv => `<td class="num saldo">${moneyH(mv.pend.pend)}</td>`,
   dias: mv => `<td class="num">${mv.pend.dias == null ? '<span class="zero">—</span>' : int(mv.pend.dias)}</td>`,
   est: mv => `<td>${pendPill(mv)}</td>`,
-  pagos: mv => `<td class="mono">${mv.pend.refs ? esc(mv.pend.refs) : '<span class="zero">—</span>'}</td>`,
+  pagos: mv => `<td class="mono wrapc">${mv.pend.refs ? esc(mv.pend.refs) : '<span class="zero">—</span>'}</td>`,
   medio: mv => `<td>${mv.pend.medio ? esc(mv.pend.medio) : '<span class="zero">—</span>'}</td>`,
   fila: mv => `<td class="mono">#${esc(mv.n)}</td>`
 };
