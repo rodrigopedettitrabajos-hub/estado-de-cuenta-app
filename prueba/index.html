@@ -1,4 +1,4 @@
-<!doctype html><html><head><meta charset=utf8><meta name=viewport content="width=device-width,initial-scale=1,viewport-fit=cover"><style>:root{color-scheme:light;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}html{scroll-padding-top:env(safe-area-inset-top,0px)}body{margin:0;padding:0;font:14px -apple-system,BlinkMacSystemFont,sans-serif;background:#fff;color:#000}img{max-width:100%}[hidden]:not([hidden=until-found i]){display:none!important}</style><meta name="app-build" content="20261117145838">
+<!doctype html><html><head><meta charset=utf8><meta name=viewport content="width=device-width,initial-scale=1,viewport-fit=cover"><style>:root{color-scheme:light;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}html{scroll-padding-top:env(safe-area-inset-top,0px)}body{margin:0;padding:0;font:14px -apple-system,BlinkMacSystemFont,sans-serif;background:#fff;color:#000}img{max-width:100%}[hidden]:not([hidden=until-found i]){display:none!important}</style><meta name="app-build" content="20261117150104">
 </head><body>
 <title>Estado de Cuenta Chivi</title>
 <meta name="theme-color" content="#2E43A3">
@@ -478,6 +478,7 @@ body.fullview #view>.tablewrap{flex:1 1 auto;max-height:none;min-height:0}
       <button class="btn btn-icon" id="rulesBtn" type="button" title="Reglas de consolidación" aria-label="Reglas de consolidación"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.7 1.7 0 0 0 .3 1.8l.1.1a2 2 0 1 1-2.8 2.8l-.1-.1a1.7 1.7 0 0 0-1.8-.3 1.7 1.7 0 0 0-1 1.5V21a2 2 0 1 1-4 0v-.1a1.7 1.7 0 0 0-1.1-1.5 1.7 1.7 0 0 0-1.8.3l-.1.1a2 2 0 1 1-2.8-2.8l.1-.1a1.7 1.7 0 0 0 .3-1.8 1.7 1.7 0 0 0-1.5-1H3a2 2 0 1 1 0-4h.1a1.7 1.7 0 0 0 1.5-1.1 1.7 1.7 0 0 0-.3-1.8l-.1-.1a2 2 0 1 1 2.8-2.8l.1.1a1.7 1.7 0 0 0 1.8.3H9a1.7 1.7 0 0 0 1-1.5V3a2 2 0 1 1 4 0v.1a1.7 1.7 0 0 0 1 1.5 1.7 1.7 0 0 0 1.8-.3l.1-.1a2 2 0 1 1 2.8 2.8l-.1.1a1.7 1.7 0 0 0-.3 1.8V9a1.7 1.7 0 0 0 1.5 1H21a2 2 0 1 1 0 4h-.1a1.7 1.7 0 0 0-1.5 1z"/></svg></button>
       <span class="hio-head" id="hioHead"><span class="hio-k">Actualizar</span><button type="button" class="btn" data-hio-upd="cli">Clientes</button><button type="button" class="btn" data-hio-upd="prov">Proveedores</button><button type="button" class="tip" aria-label="Ayuda" data-tip="Baja de HIOFFICE el estado de cuenta actualizado de Clientes o de Proveedores y lo abre en lugar del actual. Puede tardar hasta un minuto.">?</button></span>
       <span class="inst" id="installBox" hidden><button type="button" class="btn" id="installBtn">Instalar como app</button><button type="button" class="tip" aria-label="Ayuda" data-tip="Agrega la página como una app, con su ícono, en el celular o en la PC, para abrirla directo. Las versiones nuevas llegan solas. Los extractos que abras quedan solo en ese equipo.">?</button></span>
+      <span class="inst" id="updCheckBox" hidden><button type="button" class="btn" id="updCheckBtn">Buscar actualización</button><button type="button" class="tip" aria-label="Ayuda" data-tip="Revisa ahora si hay una versión nueva de la página. Igual se revisa sola al abrirla y cada 30 minutos.">?</button></span>
       <label class="btn btn-primary" for="fileInput" tabindex="0" id="fileLabel">Cargar CSV</label>
       <input type="file" id="fileInput" accept=".csv,.txt,text/csv,text/comma-separated-values,text/plain,application/vnd.ms-excel" hidden>
     </div>
@@ -2860,17 +2861,19 @@ if (location.protocol !== 'file:') {
   if (build) {
     let seen = '';
     const ss = { get: k => { try { return sessionStorage.getItem(k); } catch (e) { return null; } }, set: (k, v) => { try { sessionStorage.setItem(k, v); } catch (e) {} } };
-    const check = async () => {
-      if (document.hidden) return;
-      let v; try { const r = await fetch('version.json?t=' + Date.now(), { cache: 'no-store' }); if (!r.ok) return; v = await r.json(); } catch (e) { return; }
-      if (!v?.build || v.build === build || v.build === seen) return;
+    const check = async manual => {
+      if (document.hidden && !manual) return;
+      let v; try { const r = await fetch('version.json?t=' + Date.now(), { cache: 'no-store' }); if (!r.ok) throw 0; v = await r.json(); } catch (e) { if (manual) toast('No se pudo revisar: fijate la conexión a internet'); return; }
+      if (!v?.build || v.build === build) { if (manual) toast('Ya tenés la última versión' + (v?.label ? ` (${v.label})` : '')); return; }
+      if (v.build === seen && !manual) return;
       seen = v.build;
       if (!S.loaded && ss.get('recarga-version') !== v.build) { ss.set('recarga-version', v.build); location.reload(); return; }
       $('#updVer').textContent = v.label ? ` (${v.label})` : ''; $('#updBar').hidden = false;
     };
     $('#updBtn').addEventListener('click', () => location.reload());
     $('#updLater').addEventListener('click', () => { $('#updBar').hidden = true; });
-    check(); setInterval(check, 30 * 60e3); document.addEventListener('visibilitychange', check);
+    $('#updCheckBox').hidden = false; $('#updCheckBtn').addEventListener('click', () => check(true));
+    check(); setInterval(check, 30 * 60e3); document.addEventListener('visibilitychange', () => check());
   }
 }
 $('#startDrop').addEventListener('keydown', e => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); $('#fileInput').click(); } });
