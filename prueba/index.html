@@ -1,4 +1,4 @@
-<!doctype html><html><head><meta charset=utf8><meta name=viewport content="width=device-width,initial-scale=1,viewport-fit=cover"><style>:root{color-scheme:light;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}html{scroll-padding-top:env(safe-area-inset-top,0px)}body{margin:0;padding:0;font:14px -apple-system,BlinkMacSystemFont,sans-serif;background:#fff;color:#000}img{max-width:100%}[hidden]:not([hidden=until-found i]){display:none!important}</style><meta name="app-build" content="20261117163503">
+<!doctype html><html><head><meta charset=utf8><meta name=viewport content="width=device-width,initial-scale=1,viewport-fit=cover"><style>:root{color-scheme:light;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}html{scroll-padding-top:env(safe-area-inset-top,0px)}body{margin:0;padding:0;font:14px -apple-system,BlinkMacSystemFont,sans-serif;background:#fff;color:#000}img{max-width:100%}[hidden]:not([hidden=until-found i]){display:none!important}</style><meta name="app-build" content="20261117164108">
 </head><body>
 <title>Estado de Cuenta Chivi</title>
 <meta name="theme-color" content="#2E43A3">
@@ -1134,14 +1134,15 @@ const PEND_EST = [
 function buildPend(movs) {
   const sg = S.dir === 'cli' ? 1 : -1, fk = mv => mv.pkey + '|' + norm(mv.fac).replace(/\s+/g, '') + '|' + mv.almacen;
   const docs = new Map(), pays = new Map();
-  // Una NC con «S/N Origen» va al grupo de la factura que corrige (mismo cliente; si hay varias con ese Nº, la del mismo almacén)
+  // Una NC con «S/N Origen» va al grupo de la factura que corrige (mismo cliente; si hay varias con ese Nº, la del mismo almacén),
+  // junto con las filas Cobro/Pago de esa NC (que también traen «S/N Origen»), para que el total pendiente siga dando el saldo
   const nfac = x => norm(x).replace(/\s+/g, ''), facBy = new Map();
   for (const mv of movs) if (!mv.cobro && mv.fac && sg * (mv.debe - mv.haber) > 0) { const k = mv.pkey + '|' + nfac(mv.fac); if (!facBy.has(k)) facBy.set(k, []); facBy.get(k).push(mv); }
-  const keyOf = mv => { if (!mv.orig || sg * (mv.debe - mv.haber) >= 0) return fk(mv);
-    const fs = facBy.get(mv.pkey + '|' + nfac(mv.orig)); return fs ? fk(fs.find(x => x.almacen === mv.almacen) || fs[0]) : fk(mv); };
+  const keyOf = mv => { const fs = mv.orig && nfac(mv.orig) !== nfac(mv.fac) && facBy.get(mv.pkey + '|' + nfac(mv.orig));
+    return fs ? fk(fs.find(x => x.almacen === mv.almacen) || fs[0]) : fk(mv); };
   for (const mv of movs) {
     mv.pend = null;
-    if (mv.cobro) { if (mv.fac) { const k = fk(mv); if (!pays.has(k)) pays.set(k, []); pays.get(k).push(mv); } continue; }
+    if (mv.cobro) { if (mv.fac) { const k = keyOf(mv); if (!pays.has(k)) pays.set(k, []); pays.get(k).push(mv); } continue; }
     if (!mv.fac) { const imp = sg * (mv.debe - mv.haber); if (imp) mv.pend = { est: 'sinnro', imp, pag: 0, pend: imp, pays: [] }; continue; }
     const k = keyOf(mv); if (!docs.has(k)) docs.set(k, []); docs.get(k).push(mv);
   }

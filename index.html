@@ -1,4 +1,4 @@
-<!doctype html><html><head><meta charset=utf8><meta name=viewport content="width=device-width,initial-scale=1,viewport-fit=cover"><style>:root{color-scheme:light;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}html{scroll-padding-top:env(safe-area-inset-top,0px)}body{margin:0;padding:0;font:14px -apple-system,BlinkMacSystemFont,sans-serif;background:#fff;color:#000}img{max-width:100%}[hidden]:not([hidden=until-found i]){display:none!important}</style><meta name="app-build" content="20261117162325">
+<!doctype html><html><head><meta charset=utf8><meta name=viewport content="width=device-width,initial-scale=1,viewport-fit=cover"><style>:root{color-scheme:light;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}html{scroll-padding-top:env(safe-area-inset-top,0px)}body{margin:0;padding:0;font:14px -apple-system,BlinkMacSystemFont,sans-serif;background:#fff;color:#000}img{max-width:100%}[hidden]:not([hidden=until-found i]){display:none!important}</style><meta name="app-build" content="20261117164108">
 </head><body>
 <title>Estado de Cuenta Chivi V0.21</title>
 <meta name="theme-color" content="#2E43A3">
@@ -1016,6 +1016,7 @@ function mapColumns(h) {
     else if (/^fecha (de )?(pago|cobro)/.test(n)) { set('fpago'); if (S.fpLabel == null || m.fpago === i) S.fpLabel = /cobro/.test(n) ? 'Fecha de cobro' : 'Fecha de pago'; }
     else if (n.startsWith('fecha')) set('fecha');
     else if (n.startsWith('importe pendiente')) set('ipend');
+    else if (n.includes('origen')) set('orig'); // «S/N Origen» no es el N/S del cobro
     else if (n.startsWith('medio') || n.startsWith('forma de pago') || n.startsWith('forma pago')) set('medio');
     else if (n.includes('n/s') || n.includes('s/n') || n.includes('s pago') || /^(nro|numero|n°|nº) (de )?(pago|cobro)/.test(n)) { set('ns'); if (m.ns === i) S.nsLabel = String(raw).trim(); }
     else if (n.includes('referencia')) set('docref');
