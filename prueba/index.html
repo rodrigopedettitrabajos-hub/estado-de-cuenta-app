@@ -1,4 +1,4 @@
-<!doctype html><html><head><meta charset=utf8><meta name=viewport content="width=device-width,initial-scale=1,viewport-fit=cover"><style>:root{color-scheme:light;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}html{scroll-padding-top:env(safe-area-inset-top,0px)}body{margin:0;padding:0;font:14px -apple-system,BlinkMacSystemFont,sans-serif;background:#fff;color:#000}img{max-width:100%}[hidden]:not([hidden=until-found i]){display:none!important}</style><meta name="app-build" content="20261117170439">
+<!doctype html><html><head><meta charset=utf8><meta name=viewport content="width=device-width,initial-scale=1,viewport-fit=cover"><style>:root{color-scheme:light;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}html{scroll-padding-top:env(safe-area-inset-top,0px)}body{margin:0;padding:0;font:14px -apple-system,BlinkMacSystemFont,sans-serif;background:#fff;color:#000}img{max-width:100%}[hidden]:not([hidden=until-found i]){display:none!important}</style><meta name="app-build" content="20261117170950">
 </head><body>
 <title>Estado de Cuenta Chivi</title>
 <meta name="theme-color" content="#2E43A3">
@@ -2788,7 +2788,7 @@ async function hioFetch(k, cred, phase = () => {}) {
   if (!token || !addr) throw new Error('LOGIN');
   const base = `https://${addr}${port && port !== '443' ? ':' + port : ''}/ErpCloud`, H = { 'x-auth-token': token };
   try {
-    let docs = [];
+    let docs = [], last = '';
     // A veces HIOFFICE contesta vacío mientras arma la exportación: sigue pidiéndola sola, esperando cada vez un poco más (≈1 min y medio en total)
     const ESPERAS = [5, 10, 15, 20, 20, 25], N = ESPERAS.length + 1;
     for (let intento = 0; intento < N && !docs.length; intento++) {
@@ -2798,11 +2798,14 @@ async function hioFetch(k, cred, phase = () => {}) {
       try { resp = await fetch(base + '/exportation/launch', { method: 'POST', headers: { ...H, 'Content-Type': 'application/json' }, body: JSON.stringify({ exportationId: HIO.ids[k], startDate: HIO.desde, endDate: new Date().toISOString().slice(0, 10), filters: [] }) }); }
       catch (e) { throw new Error('NET'); }
       if (!resp.ok) { if (intento === N - 1) throw new Error('HTTP ' + resp.status); continue; }
-      let j = null; try { j = await resp.json(); } catch (e) {} // respuesta que no es JSON = vacía, reintenta
-      docs = [].concat(...[].concat(j).map(o => [].concat(o?.generatedDocs || [], o?.exportedDocs || [])));
+      const txt = await resp.text().catch(() => ''); let j = null; try { j = JSON.parse(txt); } catch (e) {} // respuesta que no es JSON = vacía, reintenta
+      last = `HTTP ${resp.status} · ` + (j ? JSON.stringify(j, (key, v) => typeof v === 'string' && v.length > 80 ? `…(${v.length} caracteres)` : v) : (txt || '(vacía)').slice(0, 300));
+      // busca el archivo en cualquier parte de la respuesta (generatedDocs, exportedDocs u otro nombre): un objeto con «data» de texto
+      const walk = (o, out) => { if (Array.isArray(o)) o.forEach(x => walk(x, out)); else if (o && typeof o === 'object') { if (typeof o.data === 'string' && o.data) out.push(o); else Object.values(o).forEach(x => walk(x, out)); } return out; };
+      docs = walk(j, []);
     }
     const doc = docs.find(d => d && d.data);
-    if (!doc) throw new Error('VACIO');
+    if (!doc) { const e = new Error('VACIO'); e.detail = `Nº ${HIO.ids[k]} · ` + last.slice(0, 600); throw e; }
     return doc;
   } finally { fetch(base + '/session/logout', { headers: H }).catch(() => {}); }
 }
@@ -2823,7 +2826,7 @@ async function hioUpdate(k) {
     if (m === 'LOGIN') { store.set('hioffice-cred', ''); HIO.mem = null; HIO.pend = k; hioAsk('HIOFFICE no aceptó el email o la contraseña. Revisalos y probá de nuevo.', cred.email); }
     else showAlert(m.startsWith('HTTP') ? `HIOFFICE no está respondiendo (${m}). Probá de nuevo en un rato.`
       : m === 'NET' ? 'La página no pudo comunicarse con HIOFFICE. Revisá la conexión a internet; si sigue igual, puede que el navegador esté bloqueando la conexión directa.'
-      : m === 'VACIO' ? 'HIOFFICE respondió pero no mandó el archivo, aunque se lo pedimos varias veces durante más de un minuto. Probá exportarlo desde HIOFFICE: si ahí tampoco sale, el problema está en la exportación.'
+      : m === 'VACIO' ? 'HIOFFICE respondió pero no mandó el archivo, aunque se lo pedimos varias veces durante más de un minuto. Probá exportarlo desde HIOFFICE: si ahí tampoco sale, el problema está en la exportación.' + (err.detail ? ` Respuesta de HIOFFICE: ${err.detail}` : '')
       : `HIOFFICE devolvió un error (${m}). Esperá un momento y volvé a intentar.`);
   } finally {
     prog.end(); HIO.busy = false; btns.forEach((b, i) => { b.disabled = false; b.textContent = lbl[i]; });
