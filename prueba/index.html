@@ -1,4 +1,4 @@
-<!doctype html><html><head><meta charset=utf8><meta name=viewport content="width=device-width,initial-scale=1,viewport-fit=cover"><style>:root{color-scheme:light;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}html{scroll-padding-top:env(safe-area-inset-top,0px)}body{margin:0;padding:0;font:14px -apple-system,BlinkMacSystemFont,sans-serif;background:#fff;color:#000}img{max-width:100%}[hidden]:not([hidden=until-found i]){display:none!important}</style><meta name="app-build" content="20261117162325">
+<!doctype html><html><head><meta charset=utf8><meta name=viewport content="width=device-width,initial-scale=1,viewport-fit=cover"><style>:root{color-scheme:light;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}html{scroll-padding-top:env(safe-area-inset-top,0px)}body{margin:0;padding:0;font:14px -apple-system,BlinkMacSystemFont,sans-serif;background:#fff;color:#000}img{max-width:100%}[hidden]:not([hidden=until-found i]){display:none!important}</style><meta name="app-build" content="20261117162710">
 </head><body>
 <title>Estado de Cuenta Chivi</title>
 <meta name="theme-color" content="#2E43A3">
@@ -160,6 +160,7 @@ table.ledger{table-layout:auto}
 .ledger>tbody>tr.ln>td{padding-inline:12px}
 
 .ledger>tbody>tr.ln>td .sub{white-space:normal;min-width:9ch}
+.ledger td .almc{display:block;white-space:normal;min-width:9ch;max-width:24ch}
 .ledger>thead>tr>th,.ledger>tbody>tr.ln>td{padding-inline:10px}
 .ledger thead th{position:sticky;top:0;z-index:2;background:var(--surface);text-align:left;font-size:11px;font-weight:600;letter-spacing:.06em;text-transform:uppercase;color:var(--muted);padding:9px 10px;border-bottom:1px solid var(--line-strong);white-space:nowrap}
 .ledger td{padding:7px 10px;border-bottom:1px solid var(--line);vertical-align:top}
@@ -1250,6 +1251,10 @@ function docCell(L) {
   return `<span class="ref">${esc(r.fac) || '<span class="zero">—</span>'}</span>${L.cat === 'suelto' ? '<span class="sub">sin N/S Pago</span>' : ''}`;
 }
 const almsTxt = L => L.alms.filter(Boolean).map(almLabel).join(', ');
+// Celda Almacén: la empresa arriba y la sucursal abajo en gris, para que la columna no quede tan ancha
+const almCell = L => { const a = L.alms.filter(Boolean).map(almLabel); if (!a.length) return '<span class="zero">—</span>';
+  if (a.length > 1) return `<span class="almc">${esc(a.join(', '))}</span>`;
+  const i = a[0].indexOf(' - '); return i < 0 ? esc(a[0]) : `${esc(a[0].slice(0, i))}<span class="sub">${esc(a[0].slice(i + 3))}</span>`; };
 function tipoCell(L) {
   const main = L.tipos.length === 1 ? esc(L.tipos[0]) : `${L.tipos.length} tipos`;
   const sub = L.hasNC ? `incluye ${plural(L.ncRows, 'nota de crédito', 'notas de crédito')}` : (L.tipos.length > 1 ? esc(L.tipos.join(', ')) : '');
@@ -1438,7 +1443,7 @@ const COLS = {
   estado: [
     { k: 'fecha', t: 'Fecha', w: 104, tip: 'fecha' }, { k: 'mov', t: 'Movimiento', w: 130, tip: 'mov' }, { k: 'prov', t: 'Proveedor o Cliente', w: 290 }, { k: 'rut', t: 'RUT/CI', w: 134 },
     { k: 'doc', t: 'Documento', w: 178, tip: 'doc' }, { k: 'mdoc', t: 'Medio Pago Documento', w: 186, tip: 'mdoc' }, { k: 'medio', t: 'Medio de pago', w: 168, tip: 'medio' },
-    { k: 'tipo', t: 'Tipo documento', w: 178, tip: 'tipo' }, { k: 'alm', t: 'Almacén', w: 160 },
+    { k: 'tipo', t: 'Tipo documento', w: 178, tip: 'tipo' }, { k: 'alm', t: 'Almacén', w: 130 },
     { k: 'debe', t: 'Debe', w: 120, num: 1, tip: 'debe' }, { k: 'haber', t: 'Haber', w: 120, num: 1, tip: 'haber' },
     { k: 'saldo', t: 'Saldo', w: 140, num: 1, tip: 'saldo' }, { k: 'filas', t: 'Filas extracto', w: 136, tip: 'filas' }],
   pagos: [
@@ -1454,7 +1459,7 @@ const COLS = {
 };
 COLS.pend = [
   { k: 'fecha', t: 'Fecha', w: 104 }, { k: 'prov', t: 'Proveedor o Cliente', w: 290 }, { k: 'rut', t: 'RUT/CI', w: 134 }, { k: 'fac', t: 'Nº factura', w: 130 },
-  { k: 'tipo', t: 'Tipo documento', w: 150 }, { k: 'alm', t: 'Almacén', w: 150 },
+  { k: 'tipo', t: 'Tipo documento', w: 150 }, { k: 'alm', t: 'Almacén', w: 130 },
   { k: 'imp', t: 'Importe', w: 130, num: 1, tip: 'pImporte' }, { k: 'pag', t: 'Pagado', w: 130, num: 1, tip: 'pPagado' }, { k: 'pend', t: 'Pendiente', w: 140, num: 1, cls: 'saldo', tip: 'pPend' },
   { k: 'dias', t: 'Días', w: 80, num: 1, tip: 'pDias' }, { k: 'est', t: 'Estado', w: 150, tip: 'pEstados' }, { k: 'pagos', t: 'Pagos', w: 150, tip: 'pPagos' }, { k: 'medio', t: 'Medio de pago', w: 160, tip: 'pMedio' }, { k: 'fila', t: 'Fila', w: 80 }];
 S.hidden = { estado: new Set(), pagos: new Set(), extracto: new Set(), pend: new Set() };
@@ -1530,7 +1535,7 @@ const ESTADO_CELL = {
   medio: L => `<td>${medioCell(L)}</td>`,
   mdoc: L => `<td>${medioDoc(L) ? esc(medioDoc(L)) : '<span class="zero">—</span>'}</td>`,
   tipo: L => `<td>${tipoCell(L)}</td>`,
-  alm: L => `<td>${esc(almsTxt(L)) || '<span class="zero">—</span>'}</td>`,
+  alm: L => `<td>${almCell(L)}</td>`,
   debe: L => `<td class="num debe">${amtH(L.debe)}</td>`,
   haber: L => `<td class="num haber">${amtH(L.haber)}</td>`,
   saldo: (L, s) => `<td class="num saldo">${moneyH(s)}</td>`,
@@ -1630,7 +1635,7 @@ const PEND_CELL = {
   rut: mv => `<td class="mono">${mv.rut ? esc(mv.rut) : '<span class="zero">—</span>'}</td>`,
   fac: mv => `<td class="mono">${mv.fac ? esc(mv.fac) : '<span class="zero">—</span>'}</td>`,
   tipo: mv => `<td>${esc(mv.tipo)}</td>`,
-  alm: mv => `<td>${esc(almLabel(mv.alk))}</td>`,
+  alm: mv => `<td>${almCell({ alms: [mv.alk] })}</td>`,
   imp: mv => `<td class="num">${moneyH(mv.pend.imp)}</td>`,
   pag: mv => `<td class="num haber">${mv.pend.pag ? moneyH(mv.pend.pag) : '<span class="zero">—</span>'}</td>`,
   pend: mv => `<td class="num saldo">${moneyH(mv.pend.pend)}</td>`,
