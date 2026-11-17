@@ -1,6 +1,6 @@
-<!doctype html><html><head><meta charset=utf8><meta name=viewport content="width=device-width,initial-scale=1,viewport-fit=cover"><style>:root{color-scheme:light;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}html{scroll-padding-top:env(safe-area-inset-top,0px)}body{margin:0;padding:0;font:14px -apple-system,BlinkMacSystemFont,sans-serif;background:#fff;color:#000}img{max-width:100%}[hidden]:not([hidden=until-found i]){display:none!important}</style><meta name="app-build" content="20261117165940">
+<!doctype html><html><head><meta charset=utf8><meta name=viewport content="width=device-width,initial-scale=1,viewport-fit=cover"><style>:root{color-scheme:light;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}html{scroll-padding-top:env(safe-area-inset-top,0px)}body{margin:0;padding:0;font:14px -apple-system,BlinkMacSystemFont,sans-serif;background:#fff;color:#000}img{max-width:100%}[hidden]:not([hidden=until-found i]){display:none!important}</style><meta name="app-build" content="20261117190042">
 </head><body>
-<title>Estado de Cuenta Chivi V0.23</title>
+<title>Estado de Cuenta Chivi V0.24</title>
 <meta name="theme-color" content="#2E43A3">
 <meta name="claude:viewport-fit-sides" content="cover">
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -108,7 +108,7 @@ h1{margin:0;font-family:var(--font-display);font-weight:600;font-size:clamp(26px
 .field.grow{flex:1 1 280px}
 .field.inline{flex-direction:row;align-items:center;gap:8px}
 .field label,.chip-label{font-size:11px;font-weight:600;letter-spacing:.07em;text-transform:uppercase;color:var(--muted)}
-input[type=search],input[type=date],input[type=email],input[type=password],select{height:34px;border:1px solid var(--line-strong);border-radius:7px;background:var(--surface);padding:0 10px;font-size:13.5px;min-width:0}
+input[type=search],input[type=date],input[type=email],input[type=password],input[type=number],select{height:34px;border:1px solid var(--line-strong);border-radius:7px;background:var(--surface);padding:0 10px;font-size:13.5px;min-width:0}
 input[type=search]{width:100%}
 #prov{max-width:280px}
 input:hover,select:hover{border-color:var(--faint)}
@@ -161,6 +161,15 @@ table.ledger{table-layout:auto}
 
 .ledger>tbody>tr.ln>td .sub{white-space:normal;min-width:9ch}
 .ledger td .almc{display:block;white-space:normal;min-width:9ch;max-width:24ch}
+/* Que las tablas entren en el ancho sin deslizar: los textos pueden ir en dos renglones; importes, fechas y RUT no se cortan */
+.ledger>tbody>tr.ln>td:not(.num):not(.c-fecha):not(.mono){white-space:normal}
+.ledger>tbody>tr.ln>td.wrapc{white-space:normal;word-spacing:-.1em;min-width:12ch}
+.ledger>thead>tr>th,.ledger>tbody>tr.ln>td,.ledger>tfoot>tr>td{padding-inline:8px}
+.ledger>thead>tr>th{letter-spacing:.01em;font-size:10.5px}
+.ledger>tbody>tr.ln>td.num,.ledger>tfoot>tr>td.num{font-size:12px}
+.ledger>thead>tr>th .lw{white-space:normal}
+.ledger>tbody>tr.ln>td .pill{white-space:normal;text-align:center}
+.ledger>tbody>tr.ln>td.c-fecha,.ledger>tbody>tr.ln>td.mono{font-size:12px}
 .ledger>thead>tr>th,.ledger>tbody>tr.ln>td{padding-inline:10px}
 .ledger thead th{position:sticky;top:0;z-index:2;background:var(--surface);text-align:left;font-size:11px;font-weight:600;letter-spacing:.06em;text-transform:uppercase;color:var(--muted);padding:9px 10px;border-bottom:1px solid var(--line-strong);white-space:nowrap}
 .ledger td{padding:7px 10px;border-bottom:1px solid var(--line);vertical-align:top}
@@ -378,7 +387,7 @@ body.no-data .summary,body.no-data .tabs,body.no-data .panel,body.no-data .file-
 .ledger tr.sec-head>td.stick{background:var(--sunken-2)}
 .prov{display:flex;flex-wrap:wrap;align-items:baseline;min-width:0;row-gap:2px}
 /* En la columna del cliente el nombre no fija el ancho: usa el espacio que sobre y se corta con … si no entra */
-.ledger td.stick{min-width:210px}
+.ledger td.stick{min-width:136px}
 .ledger td.stick>.prov,.ledger td.stick>.sub{width:0;min-width:100%}
 .ledger td.stick .pn{max-width:none}
 .prov .pn{min-width:0;max-width:210px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
@@ -481,7 +490,7 @@ body.fullview #view>.tablewrap{flex:1 1 auto;max-height:none;min-height:0}
   <header class="top">
     <div class="title-block">
       <p class="eyebrow" id="entity">Extracto de tesorería</p>
-      <h1>Estado de cuenta<span id="titleDir"></span> <button type="button" class="ver" id="verBtn" title="Ver novedades de esta versión">V0.23</button></h1>
+      <h1>Estado de cuenta<span id="titleDir"></span> <button type="button" class="ver" id="verBtn" title="Ver novedades de esta versión">V0.24</button></h1>
       <p class="meta" id="meta"></p>
     </div>
     <div class="file-block">
@@ -636,13 +645,18 @@ body.fullview #view>.tablewrap{flex:1 1 auto;max-height:none;min-height:0}
           <label class="check" for="splitProv"><input type="checkbox" id="splitProv"> Separar también por proveedor o cliente</label>
           <label class="check" for="byRut"><input type="checkbox" id="byRut" checked> Unificar por RUT los nombres escritos distinto</label>
           <p>Con esta opción, «MARTEI SAS» y «Martei S.A.S» (mismo RUT) son un solo proveedor o cliente, con el nombre que más se repite. La pestaña Extracto original sigue mostrando cómo venía escrito.</p>
+          <div class="field"><label>Exportaciones de HIOFFICE <button type="button" class="tip" aria-label="Ayuda" data-tip="El número de la exportación que piden los botones «Actualizar». Lo ves en HIOFFICE, en la configuración de la exportación. Si creás una exportación nueva, poné acá su número. Se guarda en este navegador; dejalo vacío para volver al de siempre (87 y 6503).">?</button></label>
+            <div style="display:flex;gap:10px;flex-wrap:wrap">
+              <label class="check" for="hioIdCli">Clientes <input type="number" id="hioIdCli" min="1" step="1" inputmode="numeric" style="width:110px"></label>
+              <label class="check" for="hioIdProv">Proveedores <input type="number" id="hioIdProv" min="1" step="1" inputmode="numeric" style="width:110px"></label>
+            </div></div>
         </div>
     <div class="modal-actions"><button class="btn btn-primary" id="rulesClose">Listo</button></div>
   </div>
 </div>
 <div class="modal" id="newsModal" hidden>
   <div class="modal-box news" role="dialog" aria-modal="true" aria-labelledby="newsTitle">
-    <span class="modal-title" id="newsTitle">Estado de Cuenta Chivi · V0.23</span>
+    <span class="modal-title" id="newsTitle">Estado de Cuenta Chivi · V0.24</span>
     <div class="news-body">
       <h3>Qué es</h3>
       <p>Una página que arma el estado de cuenta de proveedores o clientes a partir del CSV del extracto de tesorería. Se abre con doble clic en cualquier navegador, no necesita instalación y el archivo no se envía a ningún lado.</p>
@@ -653,7 +667,17 @@ body.fullview #view>.tablewrap{flex:1 1 auto;max-height:none;min-height:0}
         <li>Revisá la pestaña Verificación: si todo está en verde, los importes cuadran con el extracto.</li>
         <li>Exportá con Copiar, CSV, Excel o PDF. Respetan los filtros y columnas elegidos.</li>
       </ol>
-      <p class="sub">Para seguir el proyecto: guardá cada versión como un archivo aparte (V0.23, V1.0…) y sumá sus cambios acá y en el LEEME.</p>
+      <p class="sub">Para seguir el proyecto: guardá cada versión como un archivo aparte (V0.24, V1.0…) y sumá sus cambios acá y en el LEEME.</p>
+      <h3>V0.24 <span class="sub">· noviembre 2026</span></h3>
+      <h4>Datos</h4>
+      <ul>
+        <li>«Actualizar»: si HIOFFICE no manda el archivo, el aviso muestra qué contestó, para poder ver qué pasó.</li>
+        <li>En ⚙ (Reglas), «Exportaciones de HIOFFICE»: podés cambiar el número de exportación que piden los botones «Actualizar» de Clientes y Proveedores. Si dejás la casilla vacía, usa el de siempre (87 y 6503).</li>
+      </ul>
+      <h4>Tabla</h4>
+      <ul>
+        <li>«Estado de cuenta» y «Pendientes sin pagar» entran enteras en la pantalla, sin deslizar hacia el costado (desde 1366 px de ancho, una notebook común). Los textos largos pasan a dos renglones y la columna del cliente es más angosta: un nombre largo se corta con «…» y al pasar el mouse lo ves entero. Los importes, las fechas y el RUT no se cortan.</li>
+      </ul>
       <h3>V0.23 <span class="sub">· noviembre 2026</span></h3>
       <h4>Datos</h4>
       <ul>
@@ -1860,7 +1884,7 @@ const PEND_CELL = {
   pend: mv => `<td class="num saldo">${moneyH(mv.pend.pend)}</td>`,
   dias: mv => `<td class="num">${mv.pend.dias == null ? '<span class="zero">—</span>' : int(mv.pend.dias)}</td>`,
   est: mv => `<td>${pendPill(mv)}</td>`,
-  pagos: mv => `<td class="mono">${mv.pend.refs ? esc(mv.pend.refs) : '<span class="zero">—</span>'}</td>`,
+  pagos: mv => `<td class="mono wrapc">${mv.pend.refs ? esc(mv.pend.refs) : '<span class="zero">—</span>'}</td>`,
   medio: mv => `<td>${mv.pend.medio ? esc(mv.pend.medio) : '<span class="zero">—</span>'}</td>`,
   fila: mv => `<td class="mono">#${esc(mv.n)}</td>`
 };
@@ -2974,6 +2998,14 @@ document.body.classList.add('no-data');
 $('#start').hidden = false;
 /* ---------- HIOFFICE: actualizar desde la página (Bridge) ---------- */
 const HIO = { names: { cli: 'Clientes', prov: 'Proveedores' }, ids: { cli: 87, prov: 6503 }, desde: '2015-01-01', busy: false, pend: null };
+// Nº de exportación elegido en Reglas (se guarda en `hioffice-ids`); vacío = el de siempre
+HIO.base = { ...HIO.ids };
+(() => { let g = {}; try { g = JSON.parse(store.get('hioffice-ids') || '{}') || {}; } catch (e) {}
+  for (const k of ['cli', 'prov']) { const n = parseInt(g[k], 10); if (n > 0) HIO.ids[k] = n; }
+  const inp = { cli: $('#hioIdCli'), prov: $('#hioIdProv') };
+  for (const k in inp) { inp[k].placeholder = HIO.base[k]; inp[k].value = HIO.ids[k] !== HIO.base[k] ? HIO.ids[k] : '';
+    inp[k].addEventListener('change', () => { const n = parseInt(inp[k].value, 10); HIO.ids[k] = n > 0 ? n : HIO.base[k]; inp[k].value = n > 0 && n !== HIO.base[k] ? n : '';
+      const o = {}; for (const j in HIO.ids) if (HIO.ids[j] !== HIO.base[j]) o[j] = HIO.ids[j]; store.set('hioffice-ids', Object.keys(o).length ? JSON.stringify(o) : ''); }); } })();
 function hioCred() { try { return JSON.parse(store.get('hioffice-cred') || 'null'); } catch (e) { return null; } }
 function hioOpenBuf(b64, name) { // siempre viene de un botón Clientes/Proveedores
   const bin = atob(b64), buf = new Uint8Array(bin.length);
@@ -2991,7 +3023,7 @@ async function hioFetch(k, cred, phase = () => {}) {
   if (!token || !addr) throw new Error('LOGIN');
   const base = `https://${addr}${port && port !== '443' ? ':' + port : ''}/ErpCloud`, H = { 'x-auth-token': token };
   try {
-    let docs = [];
+    let docs = [], last = '';
     // A veces HIOFFICE contesta vacío mientras arma la exportación: sigue pidiéndola sola, esperando cada vez un poco más (≈1 min y medio en total)
     const ESPERAS = [5, 10, 15, 20, 20, 25], N = ESPERAS.length + 1;
     for (let intento = 0; intento < N && !docs.length; intento++) {
@@ -3001,11 +3033,14 @@ async function hioFetch(k, cred, phase = () => {}) {
       try { resp = await fetch(base + '/exportation/launch', { method: 'POST', headers: { ...H, 'Content-Type': 'application/json' }, body: JSON.stringify({ exportationId: HIO.ids[k], startDate: HIO.desde, endDate: new Date().toISOString().slice(0, 10), filters: [] }) }); }
       catch (e) { throw new Error('NET'); }
       if (!resp.ok) { if (intento === N - 1) throw new Error('HTTP ' + resp.status); continue; }
-      let j = null; try { j = await resp.json(); } catch (e) {} // respuesta que no es JSON = vacía, reintenta
-      docs = [].concat(...[].concat(j).map(o => [].concat(o?.generatedDocs || [], o?.exportedDocs || [])));
+      const txt = await resp.text().catch(() => ''); let j = null; try { j = JSON.parse(txt); } catch (e) {} // respuesta que no es JSON = vacía, reintenta
+      last = `HTTP ${resp.status} · ` + (j ? JSON.stringify(j, (key, v) => typeof v === 'string' && v.length > 80 ? `…(${v.length} caracteres)` : v) : (txt || '(vacía)').slice(0, 300));
+      // busca el archivo en cualquier parte de la respuesta (generatedDocs, exportedDocs u otro nombre): un objeto con «data» de texto
+      const walk = (o, out) => { if (Array.isArray(o)) o.forEach(x => walk(x, out)); else if (o && typeof o === 'object') { if (typeof o.data === 'string' && o.data) out.push(o); else Object.values(o).forEach(x => walk(x, out)); } return out; };
+      docs = walk(j, []);
     }
     const doc = docs.find(d => d && d.data);
-    if (!doc) throw new Error('VACIO');
+    if (!doc) { const e = new Error('VACIO'); e.detail = `Nº ${HIO.ids[k]} · ` + last.slice(0, 600); throw e; }
     return doc;
   } finally { fetch(base + '/session/logout', { headers: H }).catch(() => {}); }
 }
@@ -3026,7 +3061,7 @@ async function hioUpdate(k) {
     if (m === 'LOGIN') { store.set('hioffice-cred', ''); HIO.mem = null; HIO.pend = k; hioAsk('HIOFFICE no aceptó el email o la contraseña. Revisalos y probá de nuevo.', cred.email); }
     else showAlert(m.startsWith('HTTP') ? `HIOFFICE no está respondiendo (${m}). Probá de nuevo en un rato.`
       : m === 'NET' ? 'La página no pudo comunicarse con HIOFFICE. Revisá la conexión a internet; si sigue igual, puede que el navegador esté bloqueando la conexión directa.'
-      : m === 'VACIO' ? 'HIOFFICE respondió pero no mandó el archivo, aunque se lo pedimos varias veces durante más de un minuto. Probá exportarlo desde HIOFFICE: si ahí tampoco sale, el problema está en la exportación.'
+      : m === 'VACIO' ? 'HIOFFICE respondió pero no mandó el archivo, aunque se lo pedimos varias veces durante más de un minuto. Probá exportarlo desde HIOFFICE: si ahí tampoco sale, el problema está en la exportación.' + (err.detail ? ` Respuesta de HIOFFICE: ${err.detail}` : '')
       : `HIOFFICE devolvió un error (${m}). Esperá un momento y volvé a intentar.`);
   } finally {
     prog.end(); HIO.busy = false; btns.forEach((b, i) => { b.disabled = false; b.textContent = lbl[i]; });
