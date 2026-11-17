@@ -1,4 +1,4 @@
-<!doctype html><html><head><meta charset=utf8><meta name=viewport content="width=device-width,initial-scale=1,viewport-fit=cover"><style>:root{color-scheme:light;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}html{scroll-padding-top:env(safe-area-inset-top,0px)}body{margin:0;padding:0;font:14px -apple-system,BlinkMacSystemFont,sans-serif;background:#fff;color:#000}img{max-width:100%}[hidden]:not([hidden=until-found i]){display:none!important}</style><meta name="app-build" content="20261117150324">
+<!doctype html><html><head><meta charset=utf8><meta name=viewport content="width=device-width,initial-scale=1,viewport-fit=cover"><style>:root{color-scheme:light;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}html{scroll-padding-top:env(safe-area-inset-top,0px)}body{margin:0;padding:0;font:14px -apple-system,BlinkMacSystemFont,sans-serif;background:#fff;color:#000}img{max-width:100%}[hidden]:not([hidden=until-found i]){display:none!important}</style><meta name="app-build" content="20261117151322">
 </head><body>
 <title>Estado de Cuenta Chivi V0.20</title>
 <meta name="theme-color" content="#2E43A3">
@@ -654,6 +654,10 @@ body.fullview #view>.tablewrap{flex:1 1 auto;max-height:none;min-height:0}
       </ol>
       <p class="sub">Para seguir el proyecto: guardá cada versión como un archivo aparte (V0.20, V1.0…) y sumá sus cambios acá y en el LEEME.</p>
       <h3>V0.20 <span class="sub">· noviembre 2026</span></h3>
+      <h4>Filtros</h4>
+      <ul>
+        <li>En «Pendientes sin pagar», con <b>clientes</b> el botón «Cobrado sin N/S» arranca prendido (igual que «Cobro sin N/S» en Movimiento). Con proveedores arranca apagado.</li>
+      </ul>
       <h4>Comodidad</h4>
       <ul>
         <li>En la web: botón «Buscar actualización», al lado de «Cargar CSV», para revisar en el momento si hay una versión nueva. Si la hay, aparece el cartel con «Actualizar ahora»; si no, avisa que ya tenés la última. Abierta con doble clic desde la carpeta no aparece.</li>
@@ -1640,7 +1644,7 @@ COLS.pend = [
   { k: 'imp', t: 'Importe', w: 130, num: 1, tip: 'pImporte' }, { k: 'pag', t: 'Pagado', w: 130, num: 1, tip: 'pPagado' }, { k: 'pend', t: 'Pendiente', w: 140, num: 1, cls: 'saldo', tip: 'pPend' },
   { k: 'dias', t: 'Días', w: 80, num: 1, tip: 'pDias' }, { k: 'est', t: 'Estado', w: 150, tip: 'pEstados' }, { k: 'pagos', t: 'Pagos', w: 150, tip: 'pPagos' }, { k: 'medio', t: 'Medio de pago', w: 160, tip: 'pMedio' }, { k: 'fila', t: 'Fila', w: 80 }];
 S.hidden = { estado: new Set(), pagos: new Set(), extracto: new Set(), pend: new Set() };
-try { const po = JSON.parse(store.get('pendientes-ocultos') || 'null'); if (Array.isArray(po)) S.pendOff = new Set(po); } catch (e) {}
+try { const po = JSON.parse(store.get('pendientes-ocultos') || 'null'); if (Array.isArray(po)) S.pendOff = new Set(po.filter(k => k !== 'sinns')); } catch (e) {}
 try { const saved = JSON.parse(store.get('columnas-ocultas') || '{}'); for (const t in S.hidden) if (Array.isArray(saved[t])) saved[t].forEach(k => { if (COLS[t].some(c => c.k === k)) S.hidden[t].add(k); }); } catch (e) {}
 const saveHidden = () => store.set('columnas-ocultas', JSON.stringify(Object.fromEntries(Object.entries(S.hidden).map(([t, s]) => [t, [...s]]))));
 const availCols = tab => COLS[tab].filter(c => (S.hasMedio || c.k !== 'medio') && (S.hasFPago || c.k !== 'fpago') && (S.hasIPend || c.k !== 'mdoc'));
@@ -2133,12 +2137,12 @@ function syncControls() {
   renderDDLabels();
 }
 function setQuery(v) { F.q = v; F.qn = normS(v); F.qc = F.qn.replace(/[\s\/]/g, ''); F.isRef = /^[a-z]{1,6}\s*\/?\s*\d+$/.test(norm(v)); }
-// Cobros sin N/S: con clientes arrancan tildados (se ven), con proveedores destildados. No se recuerda entre aperturas.
+// Cobros sin N/S (y «Cobrado sin N/S» en Pendientes): con clientes arrancan tildados (se ven), con proveedores destildados. No se recuerda entre aperturas.
 const sueltoOff = () => S.dir === 'prov';
 function resetFilters(full) {
   Object.assign(F, { q: '', qn: '', qc: '', isRef: false, prov: '', desde: '', hasta: '', multi: false, nc: false });
   F.offCats = new Set(sueltoOff() ? ['suelto'] : []); F.offTipos = new Set(); F.offMedios = new Set(); F.offAlms = new Set(); F.emp = true; F.onlyEmp = false;
-  if (full) populate();
+  if (full) { populate(); S.pendOff[sueltoOff() ? 'add' : 'delete']('sinns'); } // «Cobrado sin N/S» en Pendientes: igual que «Cobro sin N/S»
   syncControls();
 }
 
@@ -2795,7 +2799,7 @@ $('#view').addEventListener('click', e => {
   const hx = e.target.closest('[data-hint-x]');
   if (hx) { store.set('hint-oculto-' + hx.dataset.hintX, '1'); hx.closest('.hint').remove(); return; }
   const pc = e.target.closest('[data-pend]');
-  if (pc) { const k = pc.dataset.pend; S.pendOff.has(k) ? S.pendOff.delete(k) : S.pendOff.add(k); store.set('pendientes-ocultos', JSON.stringify([...S.pendOff])); render(); return; }
+  if (pc) { const k = pc.dataset.pend; S.pendOff.has(k) ? S.pendOff.delete(k) : S.pendOff.add(k); store.set('pendientes-ocultos', JSON.stringify([...S.pendOff].filter(k => k !== 'sinns'))); render(); return; }
   const th = e.target.closest('th[data-sort]');
   if (th) { cycleSort(S.tab, th.dataset.sort); S.keepScroll = true; render(); return; }
   const tile = e.target.closest('[data-mtile]');
