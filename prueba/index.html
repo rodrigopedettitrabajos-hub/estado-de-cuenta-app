@@ -1,4 +1,4 @@
-<!doctype html><html><head><meta charset=utf8><meta name=viewport content="width=device-width,initial-scale=1,viewport-fit=cover"><style>:root{color-scheme:light;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}html{scroll-padding-top:env(safe-area-inset-top,0px)}body{margin:0;padding:0;font:14px -apple-system,BlinkMacSystemFont,sans-serif;background:#fff;color:#000}img{max-width:100%}[hidden]:not([hidden=until-found i]){display:none!important}</style><meta name="app-build" content="20261117165725">
+<!doctype html><html><head><meta charset=utf8><meta name=viewport content="width=device-width,initial-scale=1,viewport-fit=cover"><style>:root{color-scheme:light;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}html{scroll-padding-top:env(safe-area-inset-top,0px)}body{margin:0;padding:0;font:14px -apple-system,BlinkMacSystemFont,sans-serif;background:#fff;color:#000}img{max-width:100%}[hidden]:not([hidden=until-found i]){display:none!important}</style><meta name="app-build" content="20261117170439">
 </head><body>
 <title>Estado de Cuenta Chivi</title>
 <meta name="theme-color" content="#2E43A3">
@@ -108,7 +108,7 @@ h1{margin:0;font-family:var(--font-display);font-weight:600;font-size:clamp(26px
 .field.grow{flex:1 1 280px}
 .field.inline{flex-direction:row;align-items:center;gap:8px}
 .field label,.chip-label{font-size:11px;font-weight:600;letter-spacing:.07em;text-transform:uppercase;color:var(--muted)}
-input[type=search],input[type=date],input[type=email],input[type=password],select{height:34px;border:1px solid var(--line-strong);border-radius:7px;background:var(--surface);padding:0 10px;font-size:13.5px;min-width:0}
+input[type=search],input[type=date],input[type=email],input[type=password],input[type=number],select{height:34px;border:1px solid var(--line-strong);border-radius:7px;background:var(--surface);padding:0 10px;font-size:13.5px;min-width:0}
 input[type=search]{width:100%}
 #prov{max-width:280px}
 input:hover,select:hover{border-color:var(--faint)}
@@ -623,6 +623,11 @@ body.fullview #view>.tablewrap{flex:1 1 auto;max-height:none;min-height:0}
           <label class="check" for="splitProv"><input type="checkbox" id="splitProv"> Separar también por proveedor o cliente</label>
           <label class="check" for="byRut"><input type="checkbox" id="byRut" checked> Unificar por RUT los nombres escritos distinto</label>
           <p>Con esta opción, «MARTEI SAS» y «Martei S.A.S» (mismo RUT) son un solo proveedor o cliente, con el nombre que más se repite. La pestaña Extracto original sigue mostrando cómo venía escrito.</p>
+          <div class="field"><label>Exportaciones de HIOFFICE <button type="button" class="tip" aria-label="Ayuda" data-tip="El número de la exportación que piden los botones «Actualizar». Lo ves en HIOFFICE, en la configuración de la exportación. Si creás una exportación nueva, poné acá su número. Se guarda en este navegador; dejalo vacío para volver al de siempre (87 y 6503).">?</button></label>
+            <div style="display:flex;gap:10px;flex-wrap:wrap">
+              <label class="check" for="hioIdCli">Clientes <input type="number" id="hioIdCli" min="1" step="1" inputmode="numeric" style="width:110px"></label>
+              <label class="check" for="hioIdProv">Proveedores <input type="number" id="hioIdProv" min="1" step="1" inputmode="numeric" style="width:110px"></label>
+            </div></div>
         </div>
     <div class="modal-actions"><button class="btn btn-primary" id="rulesClose">Listo</button></div>
   </div>
@@ -2758,6 +2763,14 @@ document.body.classList.add('no-data');
 $('#start').hidden = false;
 /* ---------- HIOFFICE: actualizar desde la página (Bridge) ---------- */
 const HIO = { names: { cli: 'Clientes', prov: 'Proveedores' }, ids: { cli: 87, prov: 6503 }, desde: '2015-01-01', busy: false, pend: null };
+// Nº de exportación elegido en Reglas (se guarda en `hioffice-ids`); vacío = el de siempre
+HIO.base = { ...HIO.ids };
+(() => { let g = {}; try { g = JSON.parse(store.get('hioffice-ids') || '{}') || {}; } catch (e) {}
+  for (const k of ['cli', 'prov']) { const n = parseInt(g[k], 10); if (n > 0) HIO.ids[k] = n; }
+  const inp = { cli: $('#hioIdCli'), prov: $('#hioIdProv') };
+  for (const k in inp) { inp[k].placeholder = HIO.base[k]; inp[k].value = HIO.ids[k] !== HIO.base[k] ? HIO.ids[k] : '';
+    inp[k].addEventListener('change', () => { const n = parseInt(inp[k].value, 10); HIO.ids[k] = n > 0 ? n : HIO.base[k]; inp[k].value = n > 0 && n !== HIO.base[k] ? n : '';
+      const o = {}; for (const j in HIO.ids) if (HIO.ids[j] !== HIO.base[j]) o[j] = HIO.ids[j]; store.set('hioffice-ids', Object.keys(o).length ? JSON.stringify(o) : ''); }); } })();
 function hioCred() { try { return JSON.parse(store.get('hioffice-cred') || 'null'); } catch (e) { return null; } }
 function hioOpenBuf(b64, name) { // siempre viene de un botón Clientes/Proveedores
   const bin = atob(b64), buf = new Uint8Array(bin.length);
