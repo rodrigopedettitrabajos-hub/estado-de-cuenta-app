@@ -1,6 +1,6 @@
-<!doctype html><html><head><meta charset=utf8><meta name=viewport content="width=device-width,initial-scale=1,viewport-fit=cover"><style>:root{color-scheme:light;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}html{scroll-padding-top:env(safe-area-inset-top,0px)}body{margin:0;padding:0;font:14px -apple-system,BlinkMacSystemFont,sans-serif;background:#fff;color:#000}img{max-width:100%}[hidden]:not([hidden=until-found i]){display:none!important}</style><meta name="app-build" content="20261111213643">
+<!doctype html><html><head><meta charset=utf8><meta name=viewport content="width=device-width,initial-scale=1,viewport-fit=cover"><style>:root{color-scheme:light;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}html{scroll-padding-top:env(safe-area-inset-top,0px)}body{margin:0;padding:0;font:14px -apple-system,BlinkMacSystemFont,sans-serif;background:#fff;color:#000}img{max-width:100%}[hidden]:not([hidden=until-found i]){display:none!important}</style><meta name="app-build" content="20261117145838">
 </head><body>
-<title>Estado de Cuenta Chivi V0.18</title>
+<title>Estado de Cuenta Chivi V0.19</title>
 <meta name="theme-color" content="#2E43A3">
 <meta name="claude:viewport-fit-sides" content="cover">
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -480,7 +480,7 @@ body.fullview #view>.tablewrap{flex:1 1 auto;max-height:none;min-height:0}
   <header class="top">
     <div class="title-block">
       <p class="eyebrow" id="entity">Extracto de tesorería</p>
-      <h1>Estado de cuenta<span id="titleDir"></span> <button type="button" class="ver" id="verBtn" title="Ver novedades de esta versión">V0.18</button></h1>
+      <h1>Estado de cuenta<span id="titleDir"></span> <button type="button" class="ver" id="verBtn" title="Ver novedades de esta versión">V0.19</button></h1>
       <p class="meta" id="meta"></p>
     </div>
     <div class="file-block">
@@ -548,7 +548,7 @@ body.fullview #view>.tablewrap{flex:1 1 auto;max-height:none;min-height:0}
         <button type="button" class="dd dd-more" id="moreBtn" aria-expanded="false" aria-controls="fBody"><span class="dd-k">Más filtros</span><span class="fbadge" id="fBadge" hidden></span><svg class="dd-chev" viewBox="0 0 24 24" aria-hidden="true"><path d="M6 9l6 6 6-6"/></svg></button><button type="button" class="tip" aria-label="Ayuda" data-tip="Muestra filtros menos usados: tipo de movimiento, documento, medio de pago, pagos especiales y empleados. El número indica cuántos de ellos tenés cambiados.">?</button>
       </div>
       <div class="frow fadv" id="fBody" hidden>
-        <span class="ddw"><button type="button" class="dd" data-dd="cat" id="dd-cat" aria-haspopup="dialog" aria-expanded="false"><span class="dd-k">Movimiento</span><span class="dd-v" id="v-cat"></span><svg class="dd-chev" viewBox="0 0 24 24" aria-hidden="true"><path d="M6 9l6 6 6-6"/></svg></button><button type="button" class="tip" aria-label="Ayuda" data-tip="Tipo de línea del estado de cuenta: facturas, pagos consolidados (varias filas Cobro/Pago con el mismo N/S Pago sumadas) y cobros sin N/S, que quedan sueltos. Los cobros sin N/S arrancan ocultos.">?</button></span>
+        <span class="ddw"><button type="button" class="dd" data-dd="cat" id="dd-cat" aria-haspopup="dialog" aria-expanded="false"><span class="dd-k">Movimiento</span><span class="dd-v" id="v-cat"></span><svg class="dd-chev" viewBox="0 0 24 24" aria-hidden="true"><path d="M6 9l6 6 6-6"/></svg></button><button type="button" class="tip" aria-label="Ayuda" data-tip="Tipo de línea del estado de cuenta: facturas, pagos consolidados (varias filas Cobro/Pago con el mismo N/S Pago sumadas) y cobros sin N/S, que quedan sueltos. Con clientes los cobros sin N/S arrancan tildados; con proveedores, destildados.">?</button></span>
         <span class="ddw"><button type="button" class="dd" data-dd="tipo" id="dd-tipo" aria-haspopup="dialog" aria-expanded="false"><span class="dd-k">Documento</span><span class="dd-v" id="v-tipo"></span><svg class="dd-chev" viewBox="0 0 24 24" aria-hidden="true"><path d="M6 9l6 6 6-6"/></svg></button><button type="button" class="tip" aria-label="Ayuda" data-tip="Tipo de documento del extracto (eFactura, eTicket, notas de crédito…). Un pago se muestra si alguna de sus facturas es del tipo elegido.">?</button></span>
         <span class="ddw" hidden><button type="button" class="dd" data-dd="medio" id="dd-medio" aria-haspopup="dialog" aria-expanded="false"><span class="dd-k">Medio de pago</span><span class="dd-v" id="v-medio"></span><svg class="dd-chev" viewBox="0 0 24 24" aria-hidden="true"><path d="M6 9l6 6 6-6"/></svg></button><button type="button" class="tip" aria-label="Ayuda" data-tip="Cómo se hizo el pago: transferencia, cheque, contado… Sale de la columna Medio Pago del extracto. Las facturas no cambian con este filtro.">?</button></span>
         <span class="ddw"><button type="button" class="dd" data-dd="pagos" id="dd-pagos" aria-haspopup="dialog" aria-expanded="false"><span class="dd-k">Pagos</span><span class="dd-v" id="v-pagos"></span><svg class="dd-chev" viewBox="0 0 24 24" aria-hidden="true"><path d="M6 9l6 6 6-6"/></svg></button><button type="button" class="tip" aria-label="Ayuda" data-tip="Filtros especiales de pagos: solo los que juntaron 2 o más filas del extracto, o solo los que descuentan una nota de crédito.">?</button></span>
@@ -640,7 +640,7 @@ body.fullview #view>.tablewrap{flex:1 1 auto;max-height:none;min-height:0}
 </div>
 <div class="modal" id="newsModal" hidden>
   <div class="modal-box news" role="dialog" aria-modal="true" aria-labelledby="newsTitle">
-    <span class="modal-title" id="newsTitle">Estado de Cuenta Chivi · V0.18</span>
+    <span class="modal-title" id="newsTitle">Estado de Cuenta Chivi · V0.19</span>
     <div class="news-body">
       <h3>Qué es</h3>
       <p>Una página que arma el estado de cuenta de proveedores o clientes a partir del CSV del extracto de tesorería. Se abre con doble clic en cualquier navegador, no necesita instalación y el archivo no se envía a ningún lado.</p>
@@ -651,7 +651,12 @@ body.fullview #view>.tablewrap{flex:1 1 auto;max-height:none;min-height:0}
         <li>Revisá la pestaña Verificación: si todo está en verde, los importes cuadran con el extracto.</li>
         <li>Exportá con Copiar, CSV, Excel o PDF. Respetan los filtros y columnas elegidos.</li>
       </ol>
-      <p class="sub">Para seguir el proyecto: guardá cada versión como un archivo aparte (V0.18, V1.0…) y sumá sus cambios acá y en el LEEME.</p>
+      <p class="sub">Para seguir el proyecto: guardá cada versión como un archivo aparte (V0.19, V1.0…) y sumá sus cambios acá y en el LEEME.</p>
+      <h3>V0.19 <span class="sub">· noviembre 2026</span></h3>
+      <h4>Filtros</h4>
+      <ul>
+        <li>Con <b>clientes</b>, «Cobro sin N/S» (filtro Movimiento) arranca tildado: los cobros sin N/S se ven y el saldo coincide con el del extracto. Si lo destildás, vale hasta que cerrás la página. Con proveedores sigue arrancando destildado.</li>
+      </ul>
       <h3>V0.18 <span class="sub">· noviembre 2026</span></h3>
       <h4>Correcciones</h4>
       <ul>
@@ -1964,7 +1969,7 @@ function renderDDLabels() {
   const set = (k, v, on) => { const el = $('#v-' + k); if (el) el.textContent = v; $('#dd-' + k)?.classList.toggle('is-on', !!on); };
   const [pl, pon] = periodLabel(); set('period', pl, pon);
   set('alm', almDDLabel(), F.offAlms.size);
-  const catDefault = F.offCats.size === 1 && F.offCats.has('suelto') || (!S.catDefs.some(c => c.k === 'suelto') && !F.offCats.size);
+  const catDefault = [...F.offCats].every(k => k === 'suelto') && (F.offCats.has('suelto') === sueltoOff() || !S.catDefs.some(c => c.k === 'suelto'));
   set('cat', ddMulti(S.catDefs, F.offCats), !catDefault);
   set('tipo', ddMulti(defsFor('tipo'), F.offTipos), F.offTipos.size);
   set('medio', ddMulti(S.medioDefs, F.offMedios), F.offMedios.size);
@@ -2122,9 +2127,11 @@ function syncControls() {
   renderDDLabels();
 }
 function setQuery(v) { F.q = v; F.qn = normS(v); F.qc = F.qn.replace(/[\s\/]/g, ''); F.isRef = /^[a-z]{1,6}\s*\/?\s*\d+$/.test(norm(v)); }
+// Cobros sin N/S: con clientes arrancan tildados (se ven), con proveedores destildados. No se recuerda entre aperturas.
+const sueltoOff = () => S.dir === 'prov';
 function resetFilters(full) {
   Object.assign(F, { q: '', qn: '', qc: '', isRef: false, prov: '', desde: '', hasta: '', multi: false, nc: false });
-  F.offCats = new Set(['suelto']); F.offTipos = new Set(); F.offMedios = new Set(); F.offAlms = new Set(); F.emp = true; F.onlyEmp = false;
+  F.offCats = new Set(sueltoOff() ? ['suelto'] : []); F.offTipos = new Set(); F.offMedios = new Set(); F.offAlms = new Set(); F.emp = true; F.onlyEmp = false;
   if (full) populate();
   syncControls();
 }
@@ -2132,10 +2139,7 @@ function resetFilters(full) {
 /* ---------- recordar filtros entre sesiones ---------- */
 function saveState() {
   if (!S.loaded) return;
-  const offCats = [...F.offCats].filter(k => k !== 'suelto');
-  // «Cobro sin N/S» se recuerda solo desde clientes: con proveedores se guarda lo que había elegido en clientes
-  const prev = S.dir === 'prov' ? readSaved() : null;
-  if (prev ? !Array.isArray(prev.offCats) || prev.offCats.includes('suelto') : F.offCats.has('suelto')) offCats.push('suelto');
+  const offCats = [...F.offCats].filter(k => k !== 'suelto'); // «Cobro sin N/S» no se recuerda: arranca según sueltoOff()
   store.set('filtros', JSON.stringify({ q: F.q, prov: F.prov, desde: F.desde, hasta: F.hasta, emp: F.emp, onlyEmp: F.onlyEmp, multi: F.multi, nc: F.nc,
     groupBy: F.groupBy, offCats, offTipos: [...F.offTipos], offMedios: [...F.offMedios], offAlms: [...F.offAlms], almSuc: true,
     tab: S.tab, colSort: S.colSort, forceDir: S.forceDir, byRut: S.byRut, splitProv: S.splitProv }));
@@ -2146,8 +2150,8 @@ function restoreState(st) {
   setQuery(st.q || '');
   Object.assign(F, { prov: st.prov || '', desde: st.desde || '', hasta: st.hasta || '', emp: st.emp !== false, onlyEmp: !!st.onlyEmp, multi: !!st.multi, nc: !!st.nc,
     groupBy: st.groupBy || 'none' });
-  if (Array.isArray(st.offCats)) F.offCats = new Set(st.offCats);
-  if (S.dir === 'prov') F.offCats.add('suelto'); // con proveedores los cobros sin N/S arrancan siempre ocultos (aunque en clientes se hayan activado)
+  if (Array.isArray(st.offCats)) F.offCats = new Set(st.offCats.filter(k => k !== 'suelto'));
+  if (sueltoOff()) F.offCats.add('suelto');
   F.offTipos = new Set((st.offTipos || []).filter(t => S.tiposAll.some(x => x[0] === t)));
   F.offMedios = new Set((st.offMedios || []).filter(k => S.medioDefs.some(d => d.k === k)));
   // Filtros guardados antes de la columna Sucursal (V0.12): el almacén apagado apaga también sus sucursales
