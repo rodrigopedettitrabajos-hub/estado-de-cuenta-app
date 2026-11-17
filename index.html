@@ -1,6 +1,6 @@
-<!doctype html><html><head><meta charset=utf8><meta name=viewport content="width=device-width,initial-scale=1,viewport-fit=cover"><style>:root{color-scheme:light;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}html{scroll-padding-top:env(safe-area-inset-top,0px)}body{margin:0;padding:0;font:14px -apple-system,BlinkMacSystemFont,sans-serif;background:#fff;color:#000}img{max-width:100%}[hidden]:not([hidden=until-found i]){display:none!important}</style><meta name="app-build" content="20261117164108">
+<!doctype html><html><head><meta charset=utf8><meta name=viewport content="width=device-width,initial-scale=1,viewport-fit=cover"><style>:root{color-scheme:light;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}html{scroll-padding-top:env(safe-area-inset-top,0px)}body{margin:0;padding:0;font:14px -apple-system,BlinkMacSystemFont,sans-serif;background:#fff;color:#000}img{max-width:100%}[hidden]:not([hidden=until-found i]){display:none!important}</style><meta name="app-build" content="20261117164559">
 </head><body>
-<title>Estado de Cuenta Chivi V0.21</title>
+<title>Estado de Cuenta Chivi V0.22</title>
 <meta name="theme-color" content="#2E43A3">
 <meta name="claude:viewport-fit-sides" content="cover">
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -160,6 +160,7 @@ table.ledger{table-layout:auto}
 .ledger>tbody>tr.ln>td{padding-inline:12px}
 
 .ledger>tbody>tr.ln>td .sub{white-space:normal;min-width:9ch}
+.ledger td .almc{display:block;white-space:normal;min-width:9ch;max-width:24ch}
 .ledger>thead>tr>th,.ledger>tbody>tr.ln>td{padding-inline:10px}
 .ledger thead th{position:sticky;top:0;z-index:2;background:var(--surface);text-align:left;font-size:11px;font-weight:600;letter-spacing:.06em;text-transform:uppercase;color:var(--muted);padding:9px 10px;border-bottom:1px solid var(--line-strong);white-space:nowrap}
 .ledger td{padding:7px 10px;border-bottom:1px solid var(--line);vertical-align:top}
@@ -480,7 +481,7 @@ body.fullview #view>.tablewrap{flex:1 1 auto;max-height:none;min-height:0}
   <header class="top">
     <div class="title-block">
       <p class="eyebrow" id="entity">Extracto de tesorería</p>
-      <h1>Estado de cuenta<span id="titleDir"></span> <button type="button" class="ver" id="verBtn" title="Ver novedades de esta versión">V0.21</button></h1>
+      <h1>Estado de cuenta<span id="titleDir"></span> <button type="button" class="ver" id="verBtn" title="Ver novedades de esta versión">V0.22</button></h1>
       <p class="meta" id="meta"></p>
     </div>
     <div class="file-block">
@@ -641,7 +642,7 @@ body.fullview #view>.tablewrap{flex:1 1 auto;max-height:none;min-height:0}
 </div>
 <div class="modal" id="newsModal" hidden>
   <div class="modal-box news" role="dialog" aria-modal="true" aria-labelledby="newsTitle">
-    <span class="modal-title" id="newsTitle">Estado de Cuenta Chivi · V0.21</span>
+    <span class="modal-title" id="newsTitle">Estado de Cuenta Chivi · V0.22</span>
     <div class="news-body">
       <h3>Qué es</h3>
       <p>Una página que arma el estado de cuenta de proveedores o clientes a partir del CSV del extracto de tesorería. Se abre con doble clic en cualquier navegador, no necesita instalación y el archivo no se envía a ningún lado.</p>
@@ -652,7 +653,20 @@ body.fullview #view>.tablewrap{flex:1 1 auto;max-height:none;min-height:0}
         <li>Revisá la pestaña Verificación: si todo está en verde, los importes cuadran con el extracto.</li>
         <li>Exportá con Copiar, CSV, Excel o PDF. Respetan los filtros y columnas elegidos.</li>
       </ol>
-      <p class="sub">Para seguir el proyecto: guardá cada versión como un archivo aparte (V0.21, V1.0…) y sumá sus cambios acá y en el LEEME.</p>
+      <p class="sub">Para seguir el proyecto: guardá cada versión como un archivo aparte (V0.22, V1.0…) y sumá sus cambios acá y en el LEEME.</p>
+      <h3>V0.22 <span class="sub">· noviembre 2026</span></h3>
+      <h4>Datos</h4>
+      <ul>
+        <li>Pendientes sin pagar: si el extracto trae la columna «S/N Origen», cada nota de crédito se descuenta de la factura que corrige (aunque tenga otro Nº). Así la factura y su NC ya no aparecen las dos como pendientes. El total pendiente sigue dando el saldo.</li>
+      </ul>
+      <h4>Tabla</h4>
+      <ul>
+        <li>La columna Almacén es más angosta: la empresa arriba y la sucursal abajo, en gris.</li>
+      </ul>
+      <h4>Correcciones</h4>
+      <ul>
+        <li>El extracto de clientes nuevo (con «S/N Origen») ya no confunde esa columna con el N/S del cobro.</li>
+      </ul>
       <h3>V0.21 <span class="sub">· noviembre 2026</span></h3>
       <h4>Tabla</h4>
       <ul>
@@ -1016,7 +1030,7 @@ function mapColumns(h) {
     else if (/^fecha (de )?(pago|cobro)/.test(n)) { set('fpago'); if (S.fpLabel == null || m.fpago === i) S.fpLabel = /cobro/.test(n) ? 'Fecha de cobro' : 'Fecha de pago'; }
     else if (n.startsWith('fecha')) set('fecha');
     else if (n.startsWith('importe pendiente')) set('ipend');
-    else if (n.includes('origen')) set('orig'); // «S/N Origen» no es el N/S del cobro
+    else if (n.includes('origen')) set('orig'); // «S/N Origen»: en una NC, la factura que corrige
     else if (n.startsWith('medio') || n.startsWith('forma de pago') || n.startsWith('forma pago')) set('medio');
     else if (n.includes('n/s') || n.includes('s/n') || n.includes('s pago') || /^(nro|numero|n°|nº) (de )?(pago|cobro)/.test(n)) { set('ns'); if (m.ns === i) S.nsLabel = String(raw).trim(); }
     else if (n.includes('referencia')) set('docref');
@@ -1088,7 +1102,7 @@ function build() {
     const ns = g(r, 'ns');
     movs.push({ i: movs.length, n: (m.rowno != null && g(r, 'rowno')) ? g(r, 'rowno') : String(k + 2),
       almacen: g(r, 'almacen'), suc: g(r, 'suc'), provRaw: prov || '(sin nombre)', fant: g(r, 'fant'), rut: g(r, 'rut'),
-      fecha: g(r, 'fecha'), iso: toISO(g(r, 'fecha')), fac: g(r, 'fac'), ns, docref: g(r, 'docref'),
+      fecha: g(r, 'fecha'), iso: toISO(g(r, 'fecha')), fac: g(r, 'fac'), ns, docref: g(r, 'docref'), orig: g(r, 'orig'),
       fpago: isCobro ? g(r, 'fpago') : '', isoPago: isCobro ? toISO(g(r, 'fpago')) : '',
       tcli: g(r, 'tcli'), emp: m.tcli != null && /^emplead/.test(norm(g(r, 'tcli'))),
       medioRaw: isCobro ? g(r, 'medio') : '', medio: isCobro && S.hasMedio ? medioInfo(g(r, 'medio')) : null,
@@ -1327,17 +1341,23 @@ const PEND_EST = [
 function buildPend(movs) {
   const sg = S.dir === 'cli' ? 1 : -1, fk = mv => mv.pkey + '|' + norm(mv.fac).replace(/\s+/g, '') + '|' + mv.almacen;
   const docs = new Map(), pays = new Map();
+  // Una NC con «S/N Origen» va al grupo de la factura que corrige (mismo cliente; si hay varias con ese Nº, la del mismo almacén),
+  // junto con las filas Cobro/Pago de esa NC (que también traen «S/N Origen»), para que el total pendiente siga dando el saldo
+  const nfac = x => norm(x).replace(/\s+/g, ''), facBy = new Map();
+  for (const mv of movs) if (!mv.cobro && mv.fac && sg * (mv.debe - mv.haber) > 0) { const k = mv.pkey + '|' + nfac(mv.fac); if (!facBy.has(k)) facBy.set(k, []); facBy.get(k).push(mv); }
+  const keyOf = mv => { const fs = mv.orig && nfac(mv.orig) !== nfac(mv.fac) && facBy.get(mv.pkey + '|' + nfac(mv.orig));
+    return fs ? fk(fs.find(x => x.almacen === mv.almacen) || fs[0]) : fk(mv); };
   for (const mv of movs) {
     mv.pend = null;
-    if (mv.cobro) { if (mv.fac) { const k = fk(mv); if (!pays.has(k)) pays.set(k, []); pays.get(k).push(mv); } continue; }
+    if (mv.cobro) { if (mv.fac) { const k = keyOf(mv); if (!pays.has(k)) pays.set(k, []); pays.get(k).push(mv); } continue; }
     if (!mv.fac) { const imp = sg * (mv.debe - mv.haber); if (imp) mv.pend = { est: 'sinnro', imp, pag: 0, pend: imp, pays: [] }; continue; }
-    const k = fk(mv); if (!docs.has(k)) docs.set(k, []); docs.get(k).push(mv);
+    const k = keyOf(mv); if (!docs.has(k)) docs.set(k, []); docs.get(k).push(mv);
   }
   for (const [k, list] of docs) {
     const ps = pays.get(k) || [];
     let left = -sg * ps.reduce((a, x) => a + x.debe - x.haber, 0);
     const conNS = ps.some(x => x.ns), all = [...list].sort((a, b) => (a.iso || '').localeCompare(b.iso || '') || a.i - b.i);
-    // Una NC con el mismo Nº que su factura se descuenta de esa factura antes que los pagos
+    // Una NC con el mismo Nº que su factura (o que la nombra en «S/N Origen») se descuenta de esa factura antes que los pagos
     const impOf = mv => sg * (mv.debe - mv.haber), ncs = all.filter(mv => impOf(mv) < 0), facs = all.filter(mv => impOf(mv) > 0);
     let sorted = all;
     if (ncs.length && facs.length) {
@@ -1445,6 +1465,10 @@ function docCell(L) {
   return `<span class="ref">${esc(r.fac) || '<span class="zero">—</span>'}</span>${L.cat === 'suelto' ? '<span class="sub">sin N/S Pago</span>' : ''}`;
 }
 const almsTxt = L => L.alms.filter(Boolean).map(almLabel).join(', ');
+// Celda Almacén: la empresa arriba y la sucursal abajo en gris, para que la columna no quede tan ancha
+const almCell = L => { const a = L.alms.filter(Boolean).map(almLabel); if (!a.length) return '<span class="zero">—</span>';
+  if (a.length > 1) return `<span class="almc">${esc(a.join(', '))}</span>`;
+  const i = a[0].indexOf(' - '); return i < 0 ? esc(a[0]) : `${esc(a[0].slice(0, i))}<span class="sub">${esc(a[0].slice(i + 3))}</span>`; };
 function tipoCell(L) {
   const main = L.tipos.length === 1 ? esc(L.tipos[0]) : `${L.tipos.length} tipos`;
   const sub = L.hasNC ? `incluye ${plural(L.ncRows, 'nota de crédito', 'notas de crédito')}` : (L.tipos.length > 1 ? esc(L.tipos.join(', ')) : '');
@@ -1633,7 +1657,7 @@ const COLS = {
   estado: [
     { k: 'fecha', t: 'Fecha', w: 104, tip: 'fecha' }, { k: 'mov', t: 'Movimiento', w: 130, tip: 'mov' }, { k: 'prov', t: 'Proveedor o Cliente', w: 290 }, { k: 'rut', t: 'RUT/CI', w: 134 },
     { k: 'doc', t: 'Documento', w: 178, tip: 'doc' }, { k: 'mdoc', t: 'Medio Pago Documento', w: 186, tip: 'mdoc' }, { k: 'medio', t: 'Medio de pago', w: 168, tip: 'medio' },
-    { k: 'tipo', t: 'Tipo documento', w: 178, tip: 'tipo' }, { k: 'alm', t: 'Almacén', w: 160 },
+    { k: 'tipo', t: 'Tipo documento', w: 178, tip: 'tipo' }, { k: 'alm', t: 'Almacén', w: 130 },
     { k: 'debe', t: 'Debe', w: 120, num: 1, tip: 'debe' }, { k: 'haber', t: 'Haber', w: 120, num: 1, tip: 'haber' },
     { k: 'saldo', t: 'Saldo', w: 140, num: 1, tip: 'saldo' }, { k: 'filas', t: 'Filas extracto', w: 136, tip: 'filas' }],
   pagos: [
@@ -1649,7 +1673,7 @@ const COLS = {
 };
 COLS.pend = [
   { k: 'fecha', t: 'Fecha', w: 104 }, { k: 'prov', t: 'Proveedor o Cliente', w: 290 }, { k: 'rut', t: 'RUT/CI', w: 134 }, { k: 'fac', t: 'Nº factura', w: 130 },
-  { k: 'tipo', t: 'Tipo documento', w: 150 }, { k: 'alm', t: 'Almacén', w: 150 },
+  { k: 'tipo', t: 'Tipo documento', w: 150 }, { k: 'alm', t: 'Almacén', w: 130 },
   { k: 'imp', t: 'Importe', w: 130, num: 1, tip: 'pImporte' }, { k: 'pag', t: 'Pagado', w: 130, num: 1, tip: 'pPagado' }, { k: 'pend', t: 'Pendiente', w: 140, num: 1, cls: 'saldo', tip: 'pPend' },
   { k: 'dias', t: 'Días', w: 80, num: 1, tip: 'pDias' }, { k: 'est', t: 'Estado', w: 150, tip: 'pEstados' }, { k: 'pagos', t: 'Pagos', w: 150, tip: 'pPagos' }, { k: 'medio', t: 'Medio de pago', w: 160, tip: 'pMedio' }, { k: 'fila', t: 'Fila', w: 80 }];
 S.hidden = { estado: new Set(), pagos: new Set(), extracto: new Set(), pend: new Set() };
@@ -1725,7 +1749,7 @@ const ESTADO_CELL = {
   medio: L => `<td>${medioCell(L)}</td>`,
   mdoc: L => `<td>${medioDoc(L) ? esc(medioDoc(L)) : '<span class="zero">—</span>'}</td>`,
   tipo: L => `<td>${tipoCell(L)}</td>`,
-  alm: L => `<td>${esc(almsTxt(L)) || '<span class="zero">—</span>'}</td>`,
+  alm: L => `<td>${almCell(L)}</td>`,
   debe: L => `<td class="num debe">${amtH(L.debe)}</td>`,
   haber: L => `<td class="num haber">${amtH(L.haber)}</td>`,
   saldo: (L, s) => `<td class="num saldo">${moneyH(s)}</td>`,
@@ -1825,7 +1849,7 @@ const PEND_CELL = {
   rut: mv => `<td class="mono">${mv.rut ? esc(mv.rut) : '<span class="zero">—</span>'}</td>`,
   fac: mv => `<td class="mono">${mv.fac ? esc(mv.fac) : '<span class="zero">—</span>'}</td>`,
   tipo: mv => `<td>${esc(mv.tipo)}</td>`,
-  alm: mv => `<td>${esc(almLabel(mv.alk))}</td>`,
+  alm: mv => `<td>${almCell({ alms: [mv.alk] })}</td>`,
   imp: mv => `<td class="num">${moneyH(mv.pend.imp)}</td>`,
   pag: mv => `<td class="num haber">${mv.pend.pag ? moneyH(mv.pend.pag) : '<span class="zero">—</span>'}</td>`,
   pend: mv => `<td class="num saldo">${moneyH(mv.pend.pend)}</td>`,
