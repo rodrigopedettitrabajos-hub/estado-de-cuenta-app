@@ -1,4 +1,4 @@
-<!doctype html><html><head><meta charset=utf8><meta name=viewport content="width=device-width,initial-scale=1,viewport-fit=cover"><style>:root{color-scheme:light;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}html{scroll-padding-top:env(safe-area-inset-top,0px)}body{margin:0;padding:0;font:14px -apple-system,BlinkMacSystemFont,sans-serif;background:#fff;color:#000}img{max-width:100%}[hidden]:not([hidden=until-found i]){display:none!important}</style><meta name="app-build" content="20261120152250">
+<!doctype html><html><head><meta charset=utf8><meta name=viewport content="width=device-width,initial-scale=1,viewport-fit=cover"><style>:root{color-scheme:light;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}html{scroll-padding-top:env(safe-area-inset-top,0px)}body{margin:0;padding:0;font:14px -apple-system,BlinkMacSystemFont,sans-serif;background:#fff;color:#000}img{max-width:100%}[hidden]:not([hidden=until-found i]){display:none!important}</style><meta name="app-build" content="20261120154536">
 </head><body>
 <title>Estado de Cuenta Chivi</title>
 <meta name="theme-color" content="#2E43A3">
@@ -395,6 +395,7 @@ body.no-data .summary,body.no-data .tabs,body.no-data .panel,body.no-data .file-
 .prov .pn{min-width:0;max-width:210px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 .prov .tag{flex:none}
 .ledger .mini td{white-space:nowrap}
+.tab-mez .count{color:var(--fail)}
 .tag-mez{background:var(--fail-soft);color:var(--fail);cursor:help;white-space:nowrap}
 .prov:has(.fn){flex-wrap:nowrap}
 .prov .fn{flex:0 1 auto;min-width:0;margin-left:6px;font-size:11px;font-weight:400;color:var(--faint);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
@@ -537,6 +538,7 @@ body.fullview #view>.tablewrap{flex:1 1 auto;max-height:none;min-height:0}
     <button class="tab" role="tab" id="tab-medios" data-tab="medios" aria-selected="false" hidden>Medios de pago <span class="count" id="c-medios"></span></button>
     <button class="tab" role="tab" id="tab-extracto" data-tab="extracto" aria-selected="false">Extracto original <span class="count" id="c-extracto"></span></button>
     <button class="tab" role="tab" id="tab-pend" data-tab="pend" aria-selected="false">Pendientes sin pagar <span class="count" id="c-pend"></span></button>
+    <button class="tab tab-mez" role="tab" id="tab-mezcla" data-tab="mezcla" aria-selected="false" hidden>Otro cliente <span class="count" id="c-mezcla"></span></button>
     <button class="tab" role="tab" id="tab-verificacion" data-tab="verificacion" aria-selected="false">Verificación <span class="count" id="c-verificacion"></span></button>
   </nav>
 
@@ -782,6 +784,7 @@ function applyDirTexts() {
 const HINTS = {
   pend: () => `Documentos que <b>no quedaron pagados</b>: se cruza cada factura con las filas Cobro/Pago que tienen su mismo <b>Nº de factura</b> (mismo proveedor o cliente y almacén). <b>Pendiente</b> es lo que falta pagar. Elegí arriba qué estados ver; los filtros generales también se aplican. Los días se cuentan hasta el ${isoDisp(S.isoMax)}, la última fecha del extracto.`,
   estado: () => `Cada <b>factura</b> es una línea. Las filas Cobro/Pago con el mismo N/S Pago se suman en una línea <span class="pill p-pago">Pago</span>: tocala para ver de qué filas del extracto sale. <span class="pill p-suelto">Sin N/S</span> es un cobro sin referencia que queda solo. El <b>saldo</b> se acumula línea por línea (Debe − Haber).${S.hasMedio ? ` La columna <b>${MEDIO_T()}</b> dice cómo se hizo cada ${S.dir === 'cli' ? 'cobro' : 'pago'}; en cheques muestra el número.` : ''}${S.hasIPend ? ' <b>Medio Pago Documento</b> dice si cada factura fue Contado o Crédito.' : ''}${F.groupBy !== 'none' ? ' Tocá el encabezado gris de cada bloque para abrirlo o cerrarlo.' : ''}${F.offCats.has('suelto') && S.catDefs.some(c => c.k === 'suelto') ? ' Los <b>cobros sin N/S</b> están ocultos: activá «Cobro sin N/S» en Movimiento para sumarlos; con ellos el saldo coincide con el del extracto.' : ''}`,
+  mezcla: () => `Pagos que juntan facturas de <b>más de un proveedor o cliente</b> bajo el mismo N/S Pago, casi siempre por un error al cobrar en HIOFFICE. Elegí arriba un proveedor o cliente para ver solo los suyos. Tocá un pago para ver de quién es cada factura.`,
   pagos: () => `Un renglón por cada N/S Pago. <b>Filas</b> es cuántas filas del extracto se sumaron y <b>Neto pagado</b> es ${DT().neto}. <span class="pill p-ok">Cuadra</span> confirma que el importe es igual a la suma de esas filas. Tocá un pago para ver el detalle.`,
   extracto: () => `Las filas tal como vienen en el CSV, sin consolidar. La columna <b>Va a</b> muestra en qué pago quedó cada cobro: tocala para abrir ese pago.`,
   medios: () => `Cuántos <b>pagos</b> se hicieron con cada medio. Un pago es un N/S Pago consolidado, aunque junte varias facturas. Tocá una tarjeta o una fila para ver sus pagos; en <b>Cheque</b> la lista es cheque por cheque, con el número de Documento Referencia. Los filtros de arriba también se aplican acá.`,
@@ -1505,6 +1508,7 @@ const availCols = tab => COLS[tab].filter(c => (S.hasMedio || c.k !== 'medio') &
 const visCols = tab => availCols(tab).filter(c => !S.hidden[tab].has(c.k));
 const visKeys = tab => new Set(visCols(tab).map(c => c.k));
 /* Orden tocando el encabezado: 1.ª vez ascendente (o mayor primero en importes), 2.ª al revés, 3.ª vuelve al orden normal */
+const TV = () => S.tab === 'mezcla' ? 'pagos' : S.tab; // pestaña cuyas columnas/orden usa la vista actual
 const lineDoc = L => L.cat === 'pago' ? L.ref : L.rows[0].fac;
 const SORTV = {
   estado: { fecha: L => L.dIso, mov: L => movName(L), prov: L => L.prov, rut: L => L.rut, doc: L => lineDoc(L), medio: L => medioLabel(L), mdoc: L => medioDoc(L), tipo: L => L.tipos.join(', '), alm: L => almsTxt(L),
@@ -1600,8 +1604,8 @@ function renderEstado() {
   </table></div>`;
 }
 
-function pagosList() {
-  const list = S.lines.filter(L => (L.cat === 'pago' || L.cat === 'suelto') && lineMatch(L));
+function pagosList(mez = S.tab === 'mezcla') {
+  const list = S.lines.filter(L => (mez ? L.mezcla : L.cat === 'pago' || L.cat === 'suelto') && lineMatch(L));
   const numCmp = (a, b) => (a.cat === 'suelto') - (b.cat === 'suelto') || String(a.serie || '').localeCompare(String(b.serie || '')) || (+a.numero || 0) - (+b.numero || 0) || a.ord - b.ord;
   return colSorted('pagos', list.sort(numCmp));
 }
@@ -1618,14 +1622,14 @@ const PAGO_CELL = {
   control: L => { const ck = S.checks.per.get(L.id); return `<td>${L.cat === 'suelto' ? '<span class="pill p-suelto">Individual</span>' : ck && ck.ok ? '<span class="pill p-ok">Cuadra</span>' : '<span class="pill p-fail">Revisar</span>'}</td>`; }
 };
 function renderPagos() {
-  const list = pagosList(), cols = visCols('pagos');
-  if (!list.length) return hintHTML('pagos') + emptyState();
+  const list = pagosList(), cols = visCols('pagos'), ht = hintHTML(S.tab);
+  if (!list.length) return ht + emptyState(S.tab === 'mezcla' ? 'Con estos filtros no hay pagos con facturas de otro proveedor o cliente.' : '');
   const rows = list.map(L => {
     const open = S.open.has(L.id), exp = L.cat === 'pago';
     return `<tr class="ln ${exp ? 'clickable' : ''} ${open ? 'is-open' : ''}" data-line="${L.id}" ${exp ? `tabindex="0" aria-expanded="${open}" title="${open ? 'Ocultar' : 'Ver'} las filas del extracto que forman este pago"` : ''}>${cols.map(c => PAGO_CELL[c.k](L)).join('')}</tr>${open ? detailRow(L, cols.length) : ''}`;
   }).join('');
   const D = sum(list, 'debe'), H = sum(list, 'haber'), n = list.reduce((a, L) => a + L.rows.length, 0);
-  return hintHTML('pagos') + `<div class="tablewrap"><table class="ledger pagos">${thead(cols, 'pagos')}
+  return ht + `<div class="tablewrap"><table class="ledger pagos">${thead(cols, 'pagos')}
     <tbody>${rows}</tbody>
     <tfoot>${spanRow(cols, `Total · ${plural(list.length, 'pago', 'pagos')}`, { filas: int(n), debe: moneyH(D), haber: moneyH(H), neto: moneyH(netp(D, H)) })}</tfoot>
   </table></div>`;
@@ -1697,7 +1701,7 @@ function renderPend() {
 
 /* Selector de columnas */
 function renderColMenu() {
-  const t = S.tab; if (!COLS[t]) return;
+  const t = TV(); if (!COLS[t]) return;
   const av = availCols(t), nh = av.filter(c => S.hidden[t].has(c.k)).length;
   $('#v-cols').textContent = nh ? `${nh} oculta${nh === 1 ? '' : 's'}` : '';
   $('#dd-cols').classList.toggle('is-on', nh > 0);
@@ -1779,15 +1783,16 @@ function renderCounts() {
   const nE = S.lines.filter(lineMatch).length, nP = S.lines.filter(L => (L.cat === 'pago' || L.cat === 'suelto') && lineMatch(L)).length, nX = S.movs.filter(movMatch).length;
   const nD = S.pend.filter(pendMatch).length;
   $('#c-estado').textContent = int(nE); $('#c-pagos').textContent = int(nP); $('#c-extracto').textContent = int(nX); $('#c-pend').textContent = int(nD);
+  const nM = S.lines.filter(L => L.mezcla && lineMatch(L)).length; $('#c-mezcla').textContent = int(nM);
   $('#c-medios').textContent = S.hasMedio ? int(medioModel().groups.length) : '';
   const cv = $('#c-verificacion'); cv.textContent = S.checks.allOk ? '✓' : '!'; cv.className = 'count ' + (S.checks.allOk ? 'ok' : 'fail');
-  const totals = { estado: [nE, S.lines.length, 'línea', 'líneas'], pagos: [nP, S.lines.filter(L => L.cat === 'pago' || L.cat === 'suelto').length, 'pago', 'pagos'], medios: [nP, S.lines.filter(L => L.cat === 'pago' || L.cat === 'suelto').length, 'pago', 'pagos'], extracto: [nX, S.movs.length, 'fila', 'filas'], pend: [nD, S.pend.filter(mv => !S.pendOff.has(mv.pend.est)).length, 'documento', 'documentos'] }[S.tab];
+  const totals = { estado: [nE, S.lines.length, 'línea', 'líneas'], pagos: [nP, S.lines.filter(L => L.cat === 'pago' || L.cat === 'suelto').length, 'pago', 'pagos'], medios: [nP, S.lines.filter(L => L.cat === 'pago' || L.cat === 'suelto').length, 'pago', 'pagos'], extracto: [nX, S.movs.length, 'fila', 'filas'], mezcla: [nM, S.nMezcla, 'pago', 'pagos'], pend: [nD, S.pend.filter(mv => !S.pendOff.has(mv.pend.est)).length, 'documento', 'documentos'] }[S.tab];
   $('#resultCount').textContent = totals ? `${int(totals[0])} de ${plural(totals[1], totals[2], totals[3])}` : '';
 }
 
 function renderView() {
   const v = $('#view');
-  const html = S.tab === 'pend' ? renderPend() : S.tab === 'estado' ? renderEstado() : S.tab === 'pagos' ? renderPagos() : S.tab === 'extracto' ? renderExtracto() : S.tab === 'medios' ? renderMedios() : renderVerif();
+  const html = S.tab === 'pend' ? renderPend() : S.tab === 'estado' ? renderEstado() : S.tab === 'pagos' || S.tab === 'mezcla' ? renderPagos() : S.tab === 'extracto' ? renderExtracto() : S.tab === 'medios' ? renderMedios() : renderVerif();
   const wrap = v.querySelector('.tablewrap'); const top = wrap ? wrap.scrollTop : 0, left = wrap ? wrap.scrollLeft : 0;
   v.innerHTML = WHO(html);
   for (const tb of v.querySelectorAll('table.ledger > tbody')) { let z = 0; for (const tr of tb.children) { if (tr.classList.contains('ln')) { tr.classList.toggle('z', z % 2 === 1); z++; } else if (tr.classList.contains('sec-head')) z = 0; } }
@@ -1814,12 +1819,12 @@ function lazyCheck() {
   if (S.revealed < S.lazy.length) requestAnimationFrame(lazyCheck);
 }
 function updateTools() {
-  $$('[data-only]').forEach(el => { el.hidden = !el.dataset.only.split(' ').includes(S.tab); });
+  $$('[data-only]').forEach(el => { el.hidden = !el.dataset.only.split(' ').includes(TV()); });
   const tg = $('#toggleAll');
   tg.hidden = !(S.tab === 'estado' && F.groupBy !== 'none');
   if (!tg.hidden) tg.textContent = $$('[data-sec]').some(x => x.getAttribute('aria-expanded') === 'true') ? 'Contraer todo' : 'Expandir todo';
 }
-function render() { if (!S.loaded) return; renderSummary(); $('#summary').innerHTML = WHO($('#summary').innerHTML); renderCounts(); renderView(); updateTools(); if (COLS[S.tab]) renderColMenu(); renderDDLabels(); saveState(); }
+function render() { if (!S.loaded) return; renderSummary(); $('#summary').innerHTML = WHO($('#summary').innerHTML); renderCounts(); renderView(); updateTools(); if (COLS[TV()]) renderColMenu(); renderDDLabels(); saveState(); }
 /* ---------- menús desplegables de filtros ---------- */
 const PERIODS = [['todo', 'Todo'], ['mes', 'Este mes'], ['mesAnt', 'Mes anterior'], ['d30', 'Últimos 30 días']];
 const ddMulti = (defs, off) => { const on = defs.filter(d => !off.has(d.k)); return on.length === defs.length ? 'Todos' : on.length === 1 ? on[0].label : on.length === 0 ? 'Ninguno' : `${on.length} de ${defs.length}`; };
@@ -1861,7 +1866,7 @@ function popHTML(kind) {
   if (kind === 'pagos') return `<div class="pop-list">${optRow('checkbox', 'multi', 'multi', 'Solo pagos de 2 o más filas', F.multi)}${optRow('checkbox', 'nc', 'nc', 'Solo pagos con nota de crédito aplicada', F.nc)}${optRow('checkbox', 'mezcla', 'mezcla', WHO('Solo pagos con facturas de otro proveedor o cliente'), F.mezcla, '', S.nMezcla)}</div>`;
   if (kind === 'emp') return `<div class="pop-list">${optRow('radio', 'emp', 'inc', 'Incluir empleados', F.emp && !F.onlyEmp)}${optRow('radio', 'emp', 'exc', 'Excluir empleados', !F.emp)}${optRow('radio', 'emp', 'only', 'Solo empleados', F.onlyEmp)}</div>`;
   if (kind === 'cols') {
-    const t = S.tab, av = availCols(t), vis = av.filter(c => !S.hidden[t].has(c.k)).length;
+    const t = TV(), av = availCols(t), vis = av.filter(c => !S.hidden[t].has(c.k)).length;
     return `<div class="pop-list">${av.map(c => { const on = !S.hidden[t].has(c.k); return optRow('checkbox', 'col', c.k, WHO(c.t), on, on && vis === 1 ? 'disabled' : ''); }).join('')}</div>
       <div class="pop-foot"><button type="button" class="btn btn-ghost" data-pop-all>Mostrar todas</button><span class="sub" style="align-self:center">También aplica a lo que exportás</span></div>`;
   }
@@ -1901,7 +1906,7 @@ function popChange(e) {
   } else if (kind === 'pagos') { F[t.name] = t.checked; }
   else if (kind === 'emp') { F.emp = t.value !== 'exc'; F.onlyEmp = t.value === 'only'; provOptions(); }
   else if (kind === 'cols') {
-    const hid = S.hidden[S.tab]; if (t.checked) hid.delete(t.value); else if (visCols(S.tab).length > 1) hid.add(t.value);
+    const hid = S.hidden[TV()]; if (t.checked) hid.delete(t.value); else if (visCols(TV()).length > 1) hid.add(t.value);
     saveHidden(); S.keepScroll = true; renderView(); renderColMenu(); renderDDLabels(); return;
   } else if (t.name === 'almg') {
     const G = S.almGroups.find(x => x.g === t.value);
@@ -1926,8 +1931,9 @@ function populate() {
   $('#fileSub').textContent = `${plural(S.movs.length, 'movimiento', 'movimientos')} leídos`;
   $('#dd-emp').parentElement.hidden = !S.empSet.size; $('#dd-alm').parentElement.hidden = !S.almDefs.length; $('#dd-medio').parentElement.hidden = !S.hasMedio;
   $('#dirSel').value = S.forceDir; $('#dirSel').options[0].textContent = `Detectar solo (${S.dirAuto === 'cli' ? 'clientes' : 'proveedores'})`;
+  $('#tab-mezcla').hidden = !S.nMezcla; $('#tab-mezcla').firstChild.textContent = S.dir === 'prov' ? 'Otro proveedor ' : 'Otro cliente ';
   $('#tab-medios').hidden = !S.hasMedio; $('#pdfMediosOpt').hidden = !S.hasMedio;
-  if (!S.hasMedio && S.tab === 'medios') { S.tab = 'estado'; $$('.tab').forEach(b => b.setAttribute('aria-selected', String(b.dataset.tab === 'estado'))); }
+  if ((!S.hasMedio && S.tab === 'medios') || (!S.nMezcla && S.tab === 'mezcla')) setTabSel('estado');
   $('#concept').innerHTML = S.concepts.map(c => `<option ${c === S.concept ? 'selected' : ''}>${esc(c)}</option>`).join('');
   $('#splitProv').checked = S.splitProv; $('#byRut').checked = S.byRut;
   S.isoMin = dIsos[0] || ''; S.isoMax = dIsos[dIsos.length - 1] || '';
@@ -2056,7 +2062,7 @@ function pagosExport() {
     ['Facturas incluidas', 'filas', L => L.rows.map(x => x.fac).join(', ')], ['Primera factura', 'fechas', L => isoDisp(L.isoMin)], ['Última factura', 'fechas', L => isoDisp(L.iso)],
     ['Debe', 'debe', L => ({ c: L.debe })], ['Haber', 'haber', L => ({ c: L.haber })], ['Neto pagado', 'neto', L => ({ c: netp(L.debe, L.haber) })],
     ['Control', 'control', L => { const k = S.checks.per.get(L.id); return L.cat === 'suelto' ? 'Individual' : k && k.ok ? 'Cuadra' : 'Revisar'; }]
-  ], pagosList().map(L => [L]), 'pagos-consolidados', 'Pagos consolidados');
+  ], pagosList().map(L => [L]), S.tab === 'mezcla' ? 'pagos-otro-cliente' : 'pagos-consolidados', S.tab === 'mezcla' ? 'Pagos con otro cliente' : 'Pagos consolidados');
 }
 function pendExport() {
   return exportTable('pend', [
@@ -2080,7 +2086,7 @@ function controlExport() {
     rows: S.lines.filter(L => L.cat === 'pago').map(L => { const k = C.per.get(L.id); return [L.ref, L.prov, k.e.n, { c: k.e.debe }, { c: k.e.haber }, { c: L.debe }, { c: L.haber }, { c: k.dif }, k.ok ? 'Cuadra' : 'Revisar']; }) };
 }
 const whoT = t => (t.header = t.header.map(WHO), t);
-const currentExport = () => whoT(S.tab === 'pend' ? pendExport() : S.tab === 'medios' ? mediosExport() : S.tab === 'pagos' ? pagosExport() : S.tab === 'extracto' ? extractoExport() : S.tab === 'verificacion' ? controlExport() : estadoExport());
+const currentExport = () => whoT(S.tab === 'pend' ? pendExport() : S.tab === 'medios' ? mediosExport() : TV() === 'pagos' ? pagosExport() : S.tab === 'extracto' ? extractoExport() : S.tab === 'verificacion' ? controlExport() : estadoExport());
 const cellTxt = v => (v && typeof v === 'object') ? plainNum(v.c) : String(v ?? '');
 function toDelimited(t, d) {
   const q = s => (s.includes(d) || /["\n\r]/.test(s)) ? '"' + s.replace(/"/g, '""') + '"' : s;
@@ -2578,8 +2584,9 @@ function toast(msg) { const t = $('#toast'); t.textContent = msg; t.hidden = fal
 function showAlert(msg) { const a = $('#alert'); a.innerHTML = `<b>No se pudo leer el archivo.</b> ${esc(msg)}`; a.hidden = false; }
 
 /* ---------- eventos ---------- */
+function setTabSel(t) { S.tab = t; $$('.tab').forEach(b => b.setAttribute('aria-selected', String(b.dataset.tab === t))); }
 function setTab(t, push) {
-  if (!['estado', 'pagos', 'medios', 'extracto', 'pend', 'verificacion'].includes(t) || (t === 'medios' && !S.hasMedio)) t = 'estado';
+  if (!['estado', 'pagos', 'medios', 'extracto', 'pend', 'mezcla', 'verificacion'].includes(t) || (t === 'medios' && !S.hasMedio) || (t === 'mezcla' && !S.nMezcla)) t = 'estado';
   S.tab = t; closePop();
   $$('.tab').forEach(b => b.setAttribute('aria-selected', String(b.dataset.tab === t)));
   $('#filters').classList.toggle('verif-mode', t === 'verificacion');
@@ -2628,7 +2635,7 @@ $('#pop').addEventListener('click', e => {
   const tg = e.target.closest('[data-alm-tog]');
   if (tg) { e.preventDefault(); const g = tg.dataset.almTog, open = tg.getAttribute('aria-expanded') === 'true'; S.almOpen.delete(g); S.almShut.delete(g); (open ? S.almShut : S.almOpen).add(g); openPop('alm', POP.btn, true); return; }
   if (o) { e.preventDefault(); const kind = POP.kind, off = offFor(kind); off.clear(); for (const d of defsFor(kind)) if (d.k !== o.dataset.onlyK) off.add(d.k); S.keepScroll = true; render(); openPop(kind, POP.btn, true); return; }
-  if (e.target.closest('[data-pop-all]')) { if (POP.kind === 'cols') { S.hidden[S.tab].clear(); saveHidden(); S.keepScroll = true; renderView(); renderColMenu(); renderDDLabels(); return; } offFor(POP.kind).clear(); S.keepScroll = true; render(); openPop(POP.kind, POP.btn, true); }
+  if (e.target.closest('[data-pop-all]')) { if (POP.kind === 'cols') { S.hidden[TV()].clear(); saveHidden(); S.keepScroll = true; renderView(); renderColMenu(); renderDDLabels(); return; } offFor(POP.kind).clear(); S.keepScroll = true; render(); openPop(POP.kind, POP.btn, true); }
 });
 document.addEventListener('mousedown', e => { if (POP.kind && !e.target.closest('#pop') && !e.target.closest('.dd[data-dd]')) closePop(); });
 window.addEventListener('resize', closePop);
@@ -2653,7 +2660,7 @@ $('#view').addEventListener('click', e => {
   const pc = e.target.closest('[data-pend]');
   if (pc) { const k = pc.dataset.pend; S.pendOff.has(k) ? S.pendOff.delete(k) : S.pendOff.add(k); store.set('pendientes-ocultos', JSON.stringify([...S.pendOff].filter(k => k !== 'sinns'))); render(); return; }
   const th = e.target.closest('th[data-sort]');
-  if (th) { cycleSort(S.tab, th.dataset.sort); S.keepScroll = true; render(); return; }
+  if (th) { cycleSort(TV(), th.dataset.sort); S.keepScroll = true; render(); return; }
   const tile = e.target.closest('[data-mtile]');
   if (tile) {
     const k = tile.dataset.mtile, opening = !S.openMedio.has(k);
@@ -2762,7 +2769,7 @@ document.addEventListener('click', e => {
 window.addEventListener('scroll', hideTip, true);
 window.addEventListener('resize', hideTip);
 function setGuide(open) { $('#guide').hidden = !open; $('#guideBtn').setAttribute('aria-expanded', String(open)); }
-$('#guideBtn').addEventListener('click', () => { const open = $('#guide').hidden; setGuide(open); if (open) { for (const t of ['estado', 'pagos', 'medios', 'extracto', 'pend', 'verificacion']) store.set('hint-oculto-' + t, '0'); const v = $('#view'); if (S.loaded && !v.querySelector(':scope > .hint')) v.insertAdjacentHTML('afterbegin', WHO(hintHTML(S.tab))); } });
+$('#guideBtn').addEventListener('click', () => { const open = $('#guide').hidden; setGuide(open); if (open) { for (const t of ['estado', 'pagos', 'medios', 'extracto', 'pend', 'mezcla', 'verificacion']) store.set('hint-oculto-' + t, '0'); const v = $('#view'); if (S.loaded && !v.querySelector(':scope > .hint')) v.insertAdjacentHTML('afterbegin', WHO(hintHTML(S.tab))); } });
 $('#guideClose').addEventListener('click', () => { setGuide(false); store.set('guia-vista', '1'); });
 setGuide(store.get('guia-vista') !== '1');
 
