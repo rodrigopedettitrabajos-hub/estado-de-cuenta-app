@@ -1,4 +1,4 @@
-<!doctype html><html><head><meta charset=utf8><meta name=viewport content="width=device-width,initial-scale=1,viewport-fit=cover"><style>:root{color-scheme:light;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}html{scroll-padding-top:env(safe-area-inset-top,0px)}body{margin:0;padding:0;font:14px -apple-system,BlinkMacSystemFont,sans-serif;background:#fff;color:#000}img{max-width:100%}[hidden]:not([hidden=until-found i]){display:none!important}</style><meta name="app-build" content="20261120154536">
+<!doctype html><html><head><meta charset=utf8><meta name=viewport content="width=device-width,initial-scale=1,viewport-fit=cover"><style>:root{color-scheme:light;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}html{scroll-padding-top:env(safe-area-inset-top,0px)}body{margin:0;padding:0;font:14px -apple-system,BlinkMacSystemFont,sans-serif;background:#fff;color:#000}img{max-width:100%}[hidden]:not([hidden=until-found i]){display:none!important}</style><meta name="app-build" content="20261123153826">
 </head><body>
 <title>Estado de Cuenta Chivi</title>
 <meta name="theme-color" content="#2E43A3">
@@ -700,6 +700,7 @@ const TIPS = {
   kCons: 'Cuántas filas Cobro/Pago tenía el extracto y en cuántas líneas de pago quedaron. «Cuadra» indica que pasaron todos los controles de la pestaña Verificación.',
   cats: 'Tipos de línea del estado de cuenta. Tocá un chip para ocultarlo; tocalo de nuevo para volver a incluirlo.',
   tipos: 'Tipo de documento del extracto. Un pago se muestra si alguna de sus facturas es del tipo elegido.',
+  orig: 'En una nota de crédito (NC): la factura que corrige, según la columna «S/N Origen» del extracto. Buscando ese número encontrás la NC.',
   mdoc: 'Solo en facturas. Contado: el extracto dice que no le queda importe pendiente. Crédito: le queda un importe pendiente (columna Importe pendiente del extracto).',
   pMedio: 'Cómo se pagó este documento: el medio de las filas Cobro/Pago que traen su mismo Nº de factura. Vacío si todavía no tiene pagos o el extracto no trae el medio.',
   medio: 'Cómo se hizo el pago, según la columna Medio Pago del extracto. En cheques se agrega el número, que sale de Documento Referencia.',
@@ -771,6 +772,8 @@ function applyWhoStatic() {
 /* Medio de pago de las filas Cobro/Pago y «Medio Pago Documento» de las facturas (de la columna Importe pendiente: 0 = Contado, otro = Crédito) */
 const MEDIO_T = () => S.dir === 'cli' ? 'Medio de pago cobro' : 'Medio de pago pago';
 const isFactura = L => L.cat.startsWith('c:') && norm(L.cat.slice(2)) === 'factura';
+const origOf = mv => mv.orig && norm(mv.orig).replace(/\s+/g, '') !== norm(mv.fac).replace(/\s+/g, '') ? mv.orig : ''; // «S/N Origen»: factura que corrige la NC
+const origTxt = L => [...new Set(L.rows.filter(x => !x.cobro).map(origOf).filter(Boolean))].join(', ');
 const medioDoc = L => !isFactura(L) || L.rows.every(x => x.ipend == null) ? '' : L.rows.some(x => x.ipend) ? 'Crédito' : 'Contado';
 const netp = (d, h) => S.dir === 'cli' ? h - d : d - h;
 function applyDirTexts() {
@@ -890,7 +893,7 @@ function loadText(text, name) {
   if (miss.length) throw new Error(`No encontré la columna ${miss.join(', ')} en la primera fila. Revisá que sea el extracto de tesorería con sus encabezados originales.`);
   const data = rows.slice(1);
   S.raw = { rows: data, m, dec: detectDec(data, m) };
-  S.hasMedio = m.medio != null; S.hasTcli = m.tcli != null; S.hasFPago = m.fpago != null; S.hasIPend = m.ipend != null;
+  S.hasMedio = m.medio != null; S.hasTcli = m.tcli != null; S.hasFPago = m.fpago != null; S.hasIPend = m.ipend != null; S.hasOrig = m.orig != null;
   if (!S.fpLabel) S.fpLabel = 'Fecha de pago';
   const nsCol = COLS.extracto.find(c => c.k === 'ns'); if (nsCol) nsCol.t = S.nsLabel;
   const fpCol = COLS.pagos.concat(COLS.extracto).filter(c => c.k === 'fpago'); fpCol.forEach(c => c.t = S.fpLabel);
@@ -1012,12 +1015,12 @@ function build() {
       L.medio = infos.size === 1 ? [...infos.values()][0] : { key: '_multi', fam: 'Varios', estado: '', multi: true };
       L.docrefs = [...new Set(r.map(x => x.docref).filter(Boolean))];
     } else { L.medio = null; L.medioKeys = []; L.medioFams = []; L.docrefs = []; }
-    const tok = [L.prov, ...new Set(r.map(x => x.provRaw)), L.fant, ...new Set(r.map(x => x.rut)), L.ref || '', ...r.map(x => x.fac), ...r.map(x => x.ns), ...r.map(x => x.docref), ...r.map(x => x.medioRaw), ...L.medioFams, ...r.map(x => '#' + x.n)];
+    const tok = [L.prov, ...new Set(r.map(x => x.provRaw)), L.fant, ...new Set(r.map(x => x.rut)), L.ref || '', ...r.map(x => x.fac), ...r.map(x => x.orig), ...r.map(x => x.ns), ...r.map(x => x.docref), ...r.map(x => x.medioRaw), ...L.medioFams, ...r.map(x => '#' + x.n)];
     L.search = normS(tok.join(' | ')); L.searchC = compact(tok);
   }
   for (const mv of movs) {
     mv.dIso = mv.isoPago || mv.iso; if (mv.dIso > isoMaxAll) isoMaxAll = mv.dIso;
-    const tok = [mv.prov, mv.provRaw, mv.fant, mv.rut, mv.fac, mv.ns, mv.docref, mv.medioRaw, mv.medio ? mv.medio.fam : '', '#' + mv.n, mv.line.ref || ''];
+    const tok = [mv.prov, mv.provRaw, mv.fant, mv.rut, mv.fac, mv.orig, mv.ns, mv.docref, mv.medioRaw, mv.medio ? mv.medio.fam : '', '#' + mv.n, mv.line.ref || ''];
     mv.search = normS(tok.join(' | ')); mv.searchC = compact(tok);
   }
   S.movs = movs; S.lines = lines; S.isoMaxAll = isoMaxAll;
@@ -1480,7 +1483,7 @@ function chequesExport() {
 const COLS = {
   estado: [
     { k: 'fecha', t: 'Fecha', w: 104, tip: 'fecha' }, { k: 'mov', t: 'Movimiento', w: 130, tip: 'mov' }, { k: 'prov', t: 'Proveedor o Cliente', w: 290 }, { k: 'rut', t: 'RUT/CI', w: 134 },
-    { k: 'doc', t: 'Documento', w: 178, tip: 'doc' }, { k: 'mdoc', t: 'Medio Pago Documento', w: 186, tip: 'mdoc' }, { k: 'medio', t: 'Medio de pago', w: 168, tip: 'medio' },
+    { k: 'doc', t: 'Documento', w: 178, tip: 'doc' }, { k: 'orig', t: 'Factura origen', w: 140, tip: 'orig' }, { k: 'mdoc', t: 'Medio Pago Documento', w: 186, tip: 'mdoc' }, { k: 'medio', t: 'Medio de pago', w: 168, tip: 'medio' },
     { k: 'tipo', t: 'Tipo documento', w: 178, tip: 'tipo' }, { k: 'alm', t: 'Almacén', w: 130 },
     { k: 'debe', t: 'Debe', w: 120, num: 1, tip: 'debe' }, { k: 'haber', t: 'Haber', w: 120, num: 1, tip: 'haber' },
     { k: 'saldo', t: 'Saldo', w: 140, num: 1, tip: 'saldo' }, { k: 'filas', t: 'Filas extracto', w: 136, tip: 'filas' }],
@@ -1490,13 +1493,13 @@ const COLS = {
     { k: 'haber', t: 'Haber', w: 136, num: 1, tip: 'haber' }, { k: 'neto', t: 'Neto pagado', w: 156, num: 1, cls: 'saldo', tip: 'pNeto' },
     { k: 'control', t: 'Control', w: 116, tip: 'pControl' }],
   extracto: [
-    { k: 'fila', t: 'Fila', w: 70 }, { k: 'fecha', t: 'Fecha', w: 104 }, { k: 'prov', t: 'Proveedor o Cliente', w: 290 }, { k: 'fac', t: 'Nº factura', w: 110 },
+    { k: 'fila', t: 'Fila', w: 70 }, { k: 'fecha', t: 'Fecha', w: 104 }, { k: 'prov', t: 'Proveedor o Cliente', w: 290 }, { k: 'fac', t: 'Nº factura', w: 110 }, { k: 'orig', t: 'Factura origen', w: 130, tip: 'orig' },
     { k: 'ns', t: 'N/S Pago', w: 104 }, { k: 'fpago', t: 'Fecha de pago', w: 124, tip: 'fpago' }, { k: 'medio', t: 'Medio pago', w: 140, tip: 'medio' }, { k: 'docref', t: 'Doc. referencia', w: 130, tip: 'docref' }, { k: 'concepto', t: 'Concepto', w: 100 }, { k: 'tipo', t: 'Tipo documento', w: 150 },
     { k: 'debe', t: 'Debe', w: 120, num: 1, tip: 'debe' }, { k: 'haber', t: 'Haber', w: 120, num: 1, tip: 'haber' },
     { k: 'saldo', t: 'Saldo extracto', w: 150, num: 1, cls: '', tip: 'xSaldo' }, { k: 'va', t: 'Va a', w: 120, tip: 'xVa' }]
 };
 COLS.pend = [
-  { k: 'fecha', t: 'Fecha', w: 104 }, { k: 'prov', t: 'Proveedor o Cliente', w: 290 }, { k: 'rut', t: 'RUT/CI', w: 134 }, { k: 'fac', t: 'Nº factura', w: 130 },
+  { k: 'fecha', t: 'Fecha', w: 104 }, { k: 'prov', t: 'Proveedor o Cliente', w: 290 }, { k: 'rut', t: 'RUT/CI', w: 134 }, { k: 'fac', t: 'Nº factura', w: 130 }, { k: 'orig', t: 'Factura origen', w: 130, tip: 'orig' },
   { k: 'tipo', t: 'Tipo documento', w: 150 }, { k: 'alm', t: 'Almacén', w: 130 },
   { k: 'imp', t: 'Importe', w: 130, num: 1, tip: 'pImporte' }, { k: 'pag', t: 'Pagado', w: 130, num: 1, tip: 'pPagado' }, { k: 'pend', t: 'Pendiente', w: 140, num: 1, cls: 'saldo', tip: 'pPend' },
   { k: 'dias', t: 'Días', w: 80, num: 1, tip: 'pDias' }, { k: 'est', t: 'Estado', w: 150, tip: 'pEstados' }, { k: 'pagos', t: 'Pagos', w: 150, tip: 'pPagos' }, { k: 'medio', t: 'Medio de pago', w: 160, tip: 'pMedio' }, { k: 'fila', t: 'Fila', w: 80 }];
@@ -1504,20 +1507,20 @@ S.hidden = { estado: new Set(), pagos: new Set(), extracto: new Set(), pend: new
 try { const po = JSON.parse(store.get('pendientes-ocultos') || 'null'); if (Array.isArray(po)) S.pendOff = new Set(po.filter(k => k !== 'sinns')); } catch (e) {}
 try { const saved = JSON.parse(store.get('columnas-ocultas') || '{}'); if (!saved.v2) S.hidden.estado.add('filas'); for (const t in S.hidden) if (Array.isArray(saved[t])) saved[t].forEach(k => { if (COLS[t].some(c => c.k === k)) S.hidden[t].add(k); }); } catch (e) {}
 const saveHidden = () => store.set('columnas-ocultas', JSON.stringify({ v2: 1, ...Object.fromEntries(Object.entries(S.hidden).map(([t, s]) => [t, [...s]])) }));
-const availCols = tab => COLS[tab].filter(c => (S.hasMedio || c.k !== 'medio') && (S.hasFPago || c.k !== 'fpago') && (S.hasIPend || c.k !== 'mdoc'));
+const availCols = tab => COLS[tab].filter(c => (S.hasMedio || c.k !== 'medio') && (S.hasFPago || c.k !== 'fpago') && (S.hasIPend || c.k !== 'mdoc') && (S.hasOrig || c.k !== 'orig'));
 const visCols = tab => availCols(tab).filter(c => !S.hidden[tab].has(c.k));
 const visKeys = tab => new Set(visCols(tab).map(c => c.k));
 /* Orden tocando el encabezado: 1.ª vez ascendente (o mayor primero en importes), 2.ª al revés, 3.ª vuelve al orden normal */
 const TV = () => S.tab === 'mezcla' ? 'pagos' : S.tab; // pestaña cuyas columnas/orden usa la vista actual
 const lineDoc = L => L.cat === 'pago' ? L.ref : L.rows[0].fac;
 const SORTV = {
-  estado: { fecha: L => L.dIso, mov: L => movName(L), prov: L => L.prov, rut: L => L.rut, doc: L => lineDoc(L), medio: L => medioLabel(L), mdoc: L => medioDoc(L), tipo: L => L.tipos.join(', '), alm: L => almsTxt(L),
+  estado: { fecha: L => L.dIso, mov: L => movName(L), prov: L => L.prov, rut: L => L.rut, doc: L => lineDoc(L), orig: L => origTxt(L), medio: L => medioLabel(L), mdoc: L => medioDoc(L), tipo: L => L.tipos.join(', '), alm: L => almsTxt(L),
     debe: L => L.debe, haber: L => L.haber, saldo: (L, s) => s, filas: L => L.rows.length },
   pagos: { ref: L => L.cat === 'pago' ? [L.serie, +L.numero || 0] : ['~', 0], prov: L => L.prov, medio: L => medioLabel(L), filas: L => L.rows.length, fpago: L => L.isoPago, fechas: L => L.iso,
     debe: L => L.debe, haber: L => L.haber, neto: L => netp(L.debe, L.haber), control: L => L.cat === 'suelto' ? 1 : (S.checks.per.get(L.id) || {}).ok ? 0 : 2 },
-  pend: { fecha: mv => mv.iso, prov: mv => mv.prov, rut: mv => mv.rut, fac: mv => mv.fac, tipo: mv => mv.tipo, alm: mv => almLabel(mv.alk), imp: mv => mv.pend.imp, pag: mv => mv.pend.pag,
+  pend: { fecha: mv => mv.iso, prov: mv => mv.prov, rut: mv => mv.rut, fac: mv => mv.fac, orig: mv => origOf(mv), tipo: mv => mv.tipo, alm: mv => almLabel(mv.alk), imp: mv => mv.pend.imp, pag: mv => mv.pend.pag,
     pend: mv => mv.pend.pend, dias: mv => mv.pend.dias ?? -1, est: mv => PEND_EST.findIndex(d => d.k === mv.pend.est), pagos: mv => mv.pend.refs, medio: mv => mv.pend.medio, fila: mv => mv.i },
-  extracto: { fila: mv => mv.i, fecha: mv => mv.iso, prov: mv => mv.prov, fac: mv => mv.fac, ns: mv => mv.ref ? [mv.ref.serie, +mv.ref.numero || 0] : ['~', 0], medio: mv => mv.medioRaw, docref: mv => mv.docref, fpago: mv => mv.isoPago,
+  extracto: { fila: mv => mv.i, fecha: mv => mv.iso, prov: mv => mv.prov, fac: mv => mv.fac, orig: mv => origOf(mv), ns: mv => mv.ref ? [mv.ref.serie, +mv.ref.numero || 0] : ['~', 0], medio: mv => mv.medioRaw, docref: mv => mv.docref, fpago: mv => mv.isoPago,
     concepto: mv => mv.concepto, tipo: mv => mv.tipo, debe: mv => mv.debe, haber: mv => mv.haber, saldo: mv => mv.saldo ?? 0, va: mv => mv.line.ref || '~' }
 };
 const NUMSORT = new Set(['debe', 'haber', 'saldo', 'neto', 'filas', 'imp', 'pag', 'pend', 'dias']);
@@ -1572,6 +1575,7 @@ const ESTADO_CELL = {
   rut: L => `<td class="mono">${L.rut ? esc(L.rut) : '<span class="zero">—</span>'}</td>`,
   doc: L => `<td>${docCell(L)}</td>`,
   medio: L => `<td>${medioCell(L)}</td>`,
+  orig: L => `<td class="mono">${origTxt(L) ? esc(origTxt(L)) : '<span class="zero">—</span>'}</td>`,
   mdoc: L => `<td>${medioDoc(L) ? esc(medioDoc(L)) : '<span class="zero">—</span>'}</td>`,
   tipo: L => `<td>${tipoCell(L)}</td>`,
   alm: L => `<td>${almCell(L)}</td>`,
@@ -1643,6 +1647,7 @@ const EXT_CELL = {
   fecha: mv => `<td class="c-fecha">${esc(mv.fecha)}</td>`,
   prov: mv => `<td class="stick"><span class="prov" title="${esc(mv.provRaw)}"><span class="pn">${esc(mv.provRaw)}</span>${mv.emp ? '<span class="tag">Empleado</span>' : ''}</span>${mv.provRaw !== mv.prov ? `<span class="sub" title="Unificado por RUT">→ ${esc(mv.prov)}</span>` : ''}</td>`,
   fac: mv => `<td class="mono">${esc(mv.fac)}</td>`,
+  orig: mv => `<td class="mono">${origOf(mv) ? esc(origOf(mv)) : '<span class="zero">—</span>'}</td>`,
   ns: mv => `<td class="mono">${mv.ns ? esc(mv.ns) : '<span class="zero">—</span>'}</td>`,
   fpago: mv => `<td class="c-fecha">${mv.fpago ? esc(mv.fpago) : '<span class="zero">—</span>'}</td>`,
   medio: mv => `<td>${mv.medioRaw ? esc(mv.medioRaw) : '<span class="zero">—</span>'}</td>`,
@@ -1673,6 +1678,7 @@ const PEND_CELL = {
   prov: mv => `<td class="stick"><span class="prov" title="${esc(mv.prov)}"><span class="pn">${esc(mv.prov)}</span>${mv.emp ? '<span class="tag">Empleado</span>' : ''}</span></td>`,
   rut: mv => `<td class="mono">${mv.rut ? esc(mv.rut) : '<span class="zero">—</span>'}</td>`,
   fac: mv => `<td class="mono">${mv.fac ? esc(mv.fac) : '<span class="zero">—</span>'}</td>`,
+  orig: mv => `<td class="mono">${origOf(mv) ? esc(origOf(mv)) : '<span class="zero">—</span>'}</td>`,
   tipo: mv => `<td>${esc(mv.tipo)}</td>`,
   alm: mv => `<td>${almCell({ alms: [mv.alk] })}</td>`,
   imp: mv => `<td class="num">${moneyH(mv.pend.imp)}</td>`,
@@ -2046,7 +2052,7 @@ function estadoExport() {
     ['Proveedor o Cliente', 'prov', L => L.prov], ['Nombre fantasía', 'prov', L => L.fant], ...(S.hasTcli ? [['Tipo cliente', 'prov', L => L.tcli]] : []), ['RUT/CI', 'rut', L => L.rut],
     ['Documento', 'doc', L => L.cat === 'pago' ? L.ref : L.rows[0].fac], ['N/S Pago', 'doc', L => L.cat === 'pago' ? L.ref : (L.rows[0].ns || '')],
     ['Facturas incluidas', 'doc', L => L.rows.map(x => x.fac).join(', ')],
-    ['Medio Pago Documento', 'mdoc', L => medioDoc(L)],
+    ['Factura origen', 'orig', L => origTxt(L)], ['Medio Pago Documento', 'mdoc', L => medioDoc(L)],
     [MEDIO_T(), 'medio', L => L.medio ? (L.medio.multi ? 'Varios: ' + L.medioFams.join(', ') : L.medio.fam) : ''], ['Nº cheque / referencia', 'medio', L => L.docrefs.join(', ')],
     ['Tipo documento', 'tipo', L => L.tipos.join(', ')], ['Almacén', 'alm', L => almsTxt(L)],
     ['Cant. filas', 'filas', L => L.rows.length], ['Filas del extracto', 'filas', L => L.rows.map(x => '#' + x.n).join(', ')],
@@ -2066,7 +2072,7 @@ function pagosExport() {
 }
 function pendExport() {
   return exportTable('pend', [
-    ['Fecha', 'fecha', mv => mv.fecha], ['Proveedor o Cliente', 'prov', mv => mv.prov], ['RUT/CI', 'rut', mv => mv.rut], ['Nº factura', 'fac', mv => mv.fac],
+    ['Fecha', 'fecha', mv => mv.fecha], ['Proveedor o Cliente', 'prov', mv => mv.prov], ['RUT/CI', 'rut', mv => mv.rut], ['Nº factura', 'fac', mv => mv.fac], ['Factura origen', 'orig', mv => origOf(mv)],
     ['Tipo documento', 'tipo', mv => mv.tipo], ['Almacén', 'alm', mv => almLabel(mv.alk)],
     ['Importe', 'imp', mv => ({ c: mv.pend.imp })], ['Pagado', 'pag', mv => ({ c: mv.pend.pag })], ['Pendiente', 'pend', mv => ({ c: mv.pend.pend })],
     ['Días', 'dias', mv => mv.pend.dias ?? ''], ['Estado', 'est', mv => PEND_EST.find(d => d.k === mv.pend.est).label], ['Pagos', 'pagos', mv => mv.pend.refs], [MEDIO_T(), 'medio', mv => mv.pend.medio], ['Fila', 'fila', mv => mv.n]
@@ -2075,7 +2081,7 @@ function pendExport() {
 function extractoExport(movs) {
   return exportTable('extracto', [
     ['Fila', 'fila', mv => mv.n], ['Fecha', 'fecha', mv => mv.fecha], ['Proveedor o Cliente', 'prov', mv => mv.prov], ['Nombre fantasía', 'prov', mv => mv.fant], ...(S.hasTcli ? [['Tipo cliente', 'prov', mv => mv.tcli]] : []), ['RUT/CI', 'prov', mv => mv.rut],
-    ['Nº factura', 'fac', mv => mv.fac], [S.nsLabel, 'ns', mv => mv.ns], ...(S.hasFPago ? [[S.fpLabel, 'fpago', mv => mv.fpago]] : []), [MEDIO_T(), 'medio', mv => mv.medioRaw], ['Documento referencia', 'docref', mv => mv.docref], ['Tipo documento', 'tipo', mv => mv.tipo], ['Concepto', 'concepto', mv => mv.concepto],
+    ['Nº factura', 'fac', mv => mv.fac], ['Factura origen', 'orig', mv => origOf(mv)], [S.nsLabel, 'ns', mv => mv.ns], ...(S.hasFPago ? [[S.fpLabel, 'fpago', mv => mv.fpago]] : []), [MEDIO_T(), 'medio', mv => mv.medioRaw], ['Documento referencia', 'docref', mv => mv.docref], ['Tipo documento', 'tipo', mv => mv.tipo], ['Concepto', 'concepto', mv => mv.concepto],
     ['Debe', 'debe', mv => ({ c: mv.debe })], ['Haber', 'haber', mv => ({ c: mv.haber })], ['Saldo extracto', 'saldo', mv => mv.saldo == null ? '' : { c: mv.saldo }],
     ['Línea del estado de cuenta', 'va', mv => mv.line.cat === 'pago' ? mv.line.ref : 'Línea propia']
   ], (movs || extractoList()).map(mv => [mv]), 'extracto-trazabilidad', 'Extracto y trazabilidad');
@@ -2262,12 +2268,12 @@ function describeFilters(pend) {
 /* Columnas del estado de cuenta que entran en la hoja: si no hay lugar, se omiten de a una empezando por las menos necesarias */
 function pdfCols(orient) {
   const land = orient !== 'portrait';
-  const PW = land ? { fecha: 54, mov: 56, prov: null, rut: 66, doc: 90, medio: 76, mdoc: 62, tipo: 88, alm: 84, debe: 68, haber: 68, saldo: 74, filas: 58 }
-    : { fecha: 46, mov: 40, prov: null, rut: 62, doc: 80, medio: 64, mdoc: 52, tipo: 74, alm: 70, debe: 60, haber: 60, saldo: 66, filas: 52 };
+  const PW = land ? { fecha: 54, mov: 56, prov: null, rut: 66, doc: 90, orig: 76, medio: 76, mdoc: 62, tipo: 88, alm: 84, debe: 68, haber: 68, saldo: 74, filas: 58 }
+    : { fecha: 46, mov: 40, prov: null, rut: 62, doc: 80, orig: 66, medio: 64, mdoc: 52, tipo: 74, alm: 70, debe: 60, haber: 60, saldo: 66, filas: 52 };
   const UW = (land ? 841.89 : 595.28) - 68, MIN = land ? 130 : 110;
   let keys = visCols('estado').map(c => c.k).filter(k => k in PW);
   const fixed = ks => ks.reduce((a, k) => a + (PW[k] || 0), 0), omitted = [];
-  for (const k of ['filas', 'alm', 'tipo', 'mdoc', 'medio', 'mov', 'rut', 'doc', 'fecha']) {
+  for (const k of ['filas', 'orig', 'alm', 'tipo', 'mdoc', 'medio', 'mov', 'rut', 'doc', 'fecha']) {
     if (UW - fixed(keys) >= (keys.includes('prov') ? MIN : 0)) break;
     if (keys.includes(k)) { keys = keys.filter(x => x !== k); omitted.push(COLS.estado.find(c => c.k === k).t); }
   }
@@ -2434,7 +2440,7 @@ function buildPDF(opts) {
 
   /* Estado de cuenta: las columnas visibles en pantalla (en vertical, además, sin Tipo ni Filas) */
   const { keys, PW } = pdfCols(opts.orient);
-  const PT = { fecha: 'Fecha', mov: land ? 'Movimiento' : 'Mov.', prov: 'Proveedor o Cliente', rut: 'RUT/CI', doc: 'Documento', medio: MEDIO_T(), mdoc: land ? 'Medio Pago Doc.' : 'M. pago doc.', tipo: 'Tipo documento', alm: 'Almacén', debe: 'Debe', haber: 'Haber', saldo: 'Saldo', filas: 'Filas extracto' };
+  const PT = { fecha: 'Fecha', mov: land ? 'Movimiento' : 'Mov.', prov: 'Proveedor o Cliente', rut: 'RUT/CI', doc: 'Documento', orig: land ? 'Factura origen' : 'Fact. origen', medio: MEDIO_T(), mdoc: land ? 'Medio Pago Doc.' : 'M. pago doc.', tipo: 'Tipo documento', alm: 'Almacén', debe: 'Debe', haber: 'Haber', saldo: 'Saldo', filas: 'Filas extracto' };
   const AMT = ['debe', 'haber', 'saldo'];
   const cols = keys.map(k => ({ t: PT[k], w: PW[k], a: AMT.includes(k) ? 'r' : undefined }));
   const amtSt = { debe: { bold: true, color: PC.debe }, haber: { bold: true, color: PC.haber }, saldo: { bold: true } };
@@ -2455,7 +2461,7 @@ function buildPDF(opts) {
       const v = {
         fecha: [L.fecha], mov: [isP ? 'Pago' : isS ? 'Sin N/S' : L.cat.slice(2), { bold: isP || isS, color: isP ? PC.accent : isS ? PC.warn : PC.muted }],
         prov: [L.prov + (L.emp ? ' (empleado)' : '')], rut: [L.rut, { color: PC.muted }], doc: [isP ? `${L.ref} (${n === 1 ? 'fact. ' + L.rows[0].fac : n + ' fact.'})` : L.rows[0].fac],
-        medio: [medioLabel(L), { color: L.medio && L.medio.key !== '_none' ? PC.ink : PC.muted }], mdoc: [medioDoc(L)],
+        medio: [medioLabel(L), { color: L.medio && L.medio.key !== '_none' ? PC.ink : PC.muted }], orig: [origTxt(L), { color: PC.muted }], mdoc: [medioDoc(L)],
         tipo: [(L.tipos.length === 1 ? L.tipos[0] : 'Varios tipos') + (L.hasNC ? ' + NC' : ''), { color: PC.muted }], alm: [almsTxt(L), { color: PC.muted }],
         debe: [amtP(L.debe), { color: PC.debe }], haber: [amtP(L.haber), { color: PC.haber }], saldo: [money(saldo)], filas: [filasTxt(L), { color: PC.muted }]
       };
