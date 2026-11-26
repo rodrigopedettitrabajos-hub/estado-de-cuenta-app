@@ -1,4 +1,4 @@
-<!doctype html><html><head><meta charset=utf8><meta name=viewport content="width=device-width,initial-scale=1,viewport-fit=cover"><style>:root{color-scheme:light;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}html{scroll-padding-top:env(safe-area-inset-top,0px)}body{margin:0;padding:0;font:14px -apple-system,BlinkMacSystemFont,sans-serif;background:#fff;color:#000}img{max-width:100%}[hidden]:not([hidden=until-found i]){display:none!important}</style><meta http-equiv="Content-Security-Policy" content="default-src 'self' file:; script-src 'self' file: 'unsafe-inline' https://cdnjs.cloudflare.com; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src https://fonts.gstatic.com data:; img-src 'self' file: data: blob:; connect-src 'self' https://cloudlicense.icg.eu https://*.hiopos.com https://*.icg.eu; worker-src 'self'; manifest-src 'self'; frame-src 'self' blob:; object-src 'none'; base-uri 'none'; form-action 'none'"><meta name="app-build" content="20261126102655">
+<!doctype html><html><head><meta charset=utf8><meta name=viewport content="width=device-width,initial-scale=1,viewport-fit=cover"><style>:root{color-scheme:light;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}html{scroll-padding-top:env(safe-area-inset-top,0px)}body{margin:0;padding:0;font:14px -apple-system,BlinkMacSystemFont,sans-serif;background:#fff;color:#000}img{max-width:100%}[hidden]:not([hidden=until-found i]){display:none!important}</style><meta http-equiv="Content-Security-Policy" content="default-src 'self' file:; script-src 'self' file: 'unsafe-inline' https://cdnjs.cloudflare.com; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src https://fonts.gstatic.com data:; img-src 'self' file: data: blob:; connect-src 'self' https://cloudlicense.icg.eu https://*.hiopos.com https://*.icg.eu; worker-src 'self'; manifest-src 'self'; frame-src 'self' blob:; object-src 'none'; base-uri 'none'; form-action 'none'"><meta name="app-build" content="20261126103736">
 </head><body>
 <title>Estado de Cuenta Chivi</title>
 <meta name="theme-color" content="#2E43A3">
@@ -620,7 +620,7 @@ body.fullview #view>.tablewrap{flex:1 1 auto;max-height:none;min-height:0}
     <span class="sub">El email y la contraseña de HIOFFICE. Solo se usan para pedir el extracto. Lo más seguro es un usuario de HIOFFICE que solo pueda exportar.</span>
     <div class="field"><label for="hioEmail">Email</label><input type="email" id="hioEmail" autocomplete="username" required></div>
     <div class="field"><label for="hioPass">Contraseña</label><input type="password" id="hioPass" autocomplete="current-password" required></div>
-    <label class="check" for="hioRemember" id="hioRememberRow" hidden><input type="checkbox" id="hioRemember"> Recordar mientras la app esté abierta <button type="button" class="tip" aria-label="Ayuda" data-tip="Si lo tildás, no te pide la contraseña de nuevo hasta que cierres esta pestaña o la app (aunque la página se actualice sola). Al cerrarla se olvida. El email sí se recuerda siempre.">?</button></label>
+    <p class="sub" id="hioSaveNote" hidden>Chrome te va a ofrecer guardar la contraseña: aceptá y la próxima vez la completa solo. La guarda Chrome, cifrada; la página no.</p>
     <span class="hio-err" id="hioErr" hidden></span>
     <div class="modal-actions"><button type="button" class="btn btn-ghost" id="hioCancel">Cancelar</button><button type="submit" class="btn btn-primary" id="hioGo">Entrar y actualizar</button></div>
   </form>
@@ -2810,15 +2810,21 @@ HIO.base = { ...HIO.ids };
   for (const k in inp) { inp[k].placeholder = HIO.base[k]; inp[k].value = HIO.ids[k] !== HIO.base[k] ? HIO.ids[k] : '';
     inp[k].addEventListener('change', () => { const n = parseInt(inp[k].value, 10); HIO.ids[k] = n > 0 ? n : HIO.base[k]; inp[k].value = n > 0 && n !== HIO.base[k] ? n : '';
       const o = {}; for (const j in HIO.ids) if (HIO.ids[j] !== HIO.base[j]) o[j] = HIO.ids[j]; store.set('hioffice-ids', Object.keys(o).length ? JSON.stringify(o) : ''); }); } })();
-/* La contraseña nunca se guarda en el navegador de forma permanente (V0.28): con doble clic todas las páginas abiertas
-   desde archivos comparten esa memoria. Con doble clic queda solo en memoria; en la web, si se tilda, hasta cerrar la pestaña. */
-const HIO_WEB = location.protocol !== 'file:';
-const ses = { get(k) { try { return sessionStorage.getItem(k); } catch (e) { return null; } }, del(k) { try { sessionStorage.removeItem(k); } catch (e) {} },
-  set(k, v) { try { sessionStorage.setItem(k, v); } catch (e) {} } };
+/* La contraseña nunca la guarda la página (V0.28): con doble clic todas las páginas abiertas desde archivos comparten esa memoria.
+   Queda solo en memoria mientras la página está abierta. En la web (Chrome/Android) la guarda el gestor de contraseñas del navegador,
+   cifrada, con la API de credenciales: se ofrece guardar después de un login que anduvo y se lee al tocar «Actualizar». */
+const HIO_WEB = location.protocol !== 'file:', HIO_PC = HIO_WEB && 'PasswordCredential' in window && !!navigator.credentials;
 try { localStorage.removeItem('hioffice-cred'); } catch (e) {} // borra la guardada por versiones anteriores
-$('#hioRememberRow').hidden = !HIO_WEB;
-function hioCred() { if (!HIO_WEB) return null; try { return JSON.parse(ses.get('hioffice-cred') || 'null'); } catch (e) { return null; } }
-function hioForget() { ses.del('hioffice-cred'); HIO.mem = null; }
+$('#hioSaveNote').hidden = !HIO_PC;
+async function hioSaved() { // la que guardó Chrome (o null)
+  if (!HIO_PC) return null;
+  try { const c = await navigator.credentials.get({ password: true, mediation: 'optional' }); return c && c.password ? { email: c.id, pass: c.password } : null; } catch (e) { return null; }
+}
+function hioKeep(cred) { // después de un login que anduvo: que Chrome ofrezca guardarla
+  if (!HIO_PC || !cred.fresh) return; cred.fresh = false;
+  try { navigator.credentials.store(new PasswordCredential({ id: cred.email, password: cred.pass })).catch(() => {}); } catch (e) {}
+}
+function hioForget() { HIO.mem = null; if (HIO_PC && navigator.credentials.preventSilentAccess) navigator.credentials.preventSilentAccess().catch(() => {}); }
 function hioOpenBuf(b64, name) { // siempre viene de un botón Clientes/Proveedores
   const bin = atob(b64), buf = new Uint8Array(bin.length);
   for (let i = 0; i < bin.length; i++) buf[i] = bin.charCodeAt(i);
@@ -2858,14 +2864,15 @@ async function hioFetch(k, cred, phase = () => {}) {
 }
 async function hioUpdate(k) {
   if (HIO.busy) return;
-  const cred = hioCred() || HIO.mem;
-  if (!cred) { HIO.pend = k; hioAsk(''); return; }
   HIO.busy = true;
+  const cred = HIO.mem || (HIO.mem = await hioSaved());
+  if (!cred) { HIO.busy = false; HIO.pend = k; hioAsk(''); return; }
   const btns = [...document.querySelectorAll(`[data-hio-upd]`)], lbl = btns.map(b => b.textContent);
   btns.forEach(b => { b.disabled = true; if (b.dataset.hioUpd === k) b.textContent = 'Actualizando…'; });
   const prog = hioProgress(k);
   try {
     const doc = await hioFetch(k, cred, prog.phase);
+    hioKeep(cred);
     prog.phase('Abriendo el estado de cuenta…'); await new Promise(res => setTimeout(res, 30));
     hioOpenBuf(doc.data, `${HIO.names[k]} (HIOFFICE ${(d => `${String(d.getDate()).padStart(2, '0')}/${String(d.getMonth() + 1).padStart(2, '0')} ${String(d.getHours()).padStart(2, '0')}:${String(d.getMinutes()).padStart(2, '0')}`)(new Date())})`);
   } catch (err) {
@@ -2898,7 +2905,7 @@ function hioProgress(k) {
   };
 }
 function hioAsk(err, email) {
-  const c = hioCred(); $('#hioEmail').value = email || c?.email || HIO.mem?.email || store.get('hioffice-email') || ''; $('#hioPass').value = '';
+  $('#hioEmail').value = email || HIO.mem?.email || store.get('hioffice-email') || ''; $('#hioPass').value = '';
   $('#hioErr').textContent = err; $('#hioErr').hidden = !err;
   $('#hioModal').hidden = false; ($('#hioEmail').value ? $('#hioPass') : $('#hioEmail')).focus();
 }
@@ -2906,8 +2913,7 @@ $('#hioForm').addEventListener('submit', e => {
   e.preventDefault();
   const cred = { email: $('#hioEmail').value.trim(), pass: $('#hioPass').value };
   if (!cred.email || !cred.pass) return;
-  HIO.mem = cred; store.set('hioffice-email', cred.email);
-  if (HIO_WEB && $('#hioRemember').checked) ses.set('hioffice-cred', JSON.stringify(cred)); else ses.del('hioffice-cred');
+  cred.fresh = true; HIO.mem = cred; store.set('hioffice-email', cred.email);
   $('#hioModal').hidden = true; const k = HIO.pend; HIO.pend = null; if (k) hioUpdate(k);
 });
 $('#hioCancel').addEventListener('click', () => { $('#hioModal').hidden = true; HIO.pend = null; });
