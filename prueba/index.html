@@ -1,4 +1,4 @@
-<!doctype html><html><head><meta charset=utf8><meta name=viewport content="width=device-width,initial-scale=1,viewport-fit=cover"><style>:root{color-scheme:light;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}html{scroll-padding-top:env(safe-area-inset-top,0px)}body{margin:0;padding:0;font:14px -apple-system,BlinkMacSystemFont,sans-serif;background:#fff;color:#000}img{max-width:100%}[hidden]:not([hidden=until-found i]){display:none!important}</style><meta name="app-build" content="20261123153826">
+<!doctype html><html><head><meta charset=utf8><meta name=viewport content="width=device-width,initial-scale=1,viewport-fit=cover"><style>:root{color-scheme:light;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}html{scroll-padding-top:env(safe-area-inset-top,0px)}body{margin:0;padding:0;font:14px -apple-system,BlinkMacSystemFont,sans-serif;background:#fff;color:#000}img{max-width:100%}[hidden]:not([hidden=until-found i]){display:none!important}</style><meta http-equiv="Content-Security-Policy" content="default-src 'self' file:; script-src 'self' file: 'unsafe-inline' https://cdnjs.cloudflare.com; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src https://fonts.gstatic.com data:; img-src 'self' file: data: blob:; connect-src 'self' https://cloudlicense.icg.eu https://*.hiopos.com https://*.icg.eu; worker-src 'self'; manifest-src 'self'; frame-src 'self' blob:; object-src 'none'; base-uri 'none'; form-action 'none'"><meta name="app-build" content="20261127143007">
 </head><body>
 <title>Estado de Cuenta Chivi</title>
 <meta name="theme-color" content="#2E43A3">
@@ -400,6 +400,8 @@ body.no-data .summary,body.no-data .tabs,body.no-data .panel,body.no-data .file-
 .prov:has(.fn){flex-wrap:nowrap}
 .prov .fn{flex:0 1 auto;min-width:0;margin-left:6px;font-size:11px;font-weight:400;color:var(--faint);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 .prov:has(.fn) .pn{flex:0 0 auto;max-width:100%}
+/* En la columna fija el nombre (con fantasía o dos proveedores) se achica y pasa a otro renglón; no se encima en RUT/Documento */
+.ledger td.stick .prov .pn{flex:0 1 auto}
 .cur{color:var(--faint);font-size:.92em;margin-right:3px}
 /* Pantalla completa: solo la tabla */
 #fullBtn svg{width:15px;height:15px;fill:none;stroke:currentColor;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round}
@@ -620,7 +622,7 @@ body.fullview #view>.tablewrap{flex:1 1 auto;max-height:none;min-height:0}
     <span class="sub">El email y la contraseña de HIOFFICE. Solo se usan para pedir el extracto. Lo más seguro es un usuario de HIOFFICE que solo pueda exportar.</span>
     <div class="field"><label for="hioEmail">Email</label><input type="email" id="hioEmail" autocomplete="username" required></div>
     <div class="field"><label for="hioPass">Contraseña</label><input type="password" id="hioPass" autocomplete="current-password" required></div>
-    <label class="check" for="hioRemember"><input type="checkbox" id="hioRemember"> Recordar en esta PC (no usar en PCs compartidas) <button type="button" class="tip" aria-label="Ayuda" data-tip="Guarda el email y la contraseña en este navegador para no escribirlos cada vez. Ojo: otras páginas abiertas desde archivos de esta PC podrían leerlos. Si lo tildás, usá un usuario de HIOFFICE que solo pueda exportar. Si no lo tildás, se piden de nuevo cada vez que abrís la página. Para olvidarlos, volvé a entrar con esta opción destildada.">?</button></label>
+    <p class="sub" id="hioSaveNote" hidden>Chrome te va a ofrecer guardar la contraseña: aceptá y la próxima vez la completa solo. La guarda Chrome, cifrada; la página no.</p>
     <span class="hio-err" id="hioErr" hidden></span>
     <div class="modal-actions"><button type="button" class="btn btn-ghost" id="hioCancel">Cancelar</button><button type="submit" class="btn btn-primary" id="hioGo">Entrar y actualizar</button></div>
   </form>
@@ -785,7 +787,7 @@ function applyDirTexts() {
   $('#titleDir').textContent = ' - ' + dn; document.title = `Estado de Cuenta Chivi - ${dn}`;
 }
 const HINTS = {
-  pend: () => `Documentos que <b>no quedaron pagados</b>: se cruza cada factura con las filas Cobro/Pago que tienen su mismo <b>Nº de factura</b> (mismo proveedor o cliente y almacén). <b>Pendiente</b> es lo que falta pagar. Elegí arriba qué estados ver; los filtros generales también se aplican. Los días se cuentan hasta el ${isoDisp(S.isoMax)}, la última fecha del extracto.`,
+  pend: () => `Documentos que <b>no quedaron pagados</b>: se cruza cada factura con las filas Cobro/Pago que tienen su mismo <b>Nº de factura</b> (mismo proveedor o cliente y almacén). <b>Pendiente</b> es lo que falta pagar. Elegí arriba qué estados ver; los filtros generales también se aplican. Los días se cuentan hasta el ${isoDisp(S.isoMax)}, la última fecha del extracto.${pendGrouped() ? ' Sin un proveedor o cliente elegido se ve <b>uno por renglón con su deuda total</b>: tocalo para ver sus documentos (o usá «Expandir todo»). Si buscás algo, se muestran los documentos directamente.' : ''}`,
   estado: () => `Cada <b>factura</b> es una línea. Las filas Cobro/Pago con el mismo N/S Pago se suman en una línea <span class="pill p-pago">Pago</span>: tocala para ver de qué filas del extracto sale. <span class="pill p-suelto">Sin N/S</span> es un cobro sin referencia que queda solo. El <b>saldo</b> se acumula línea por línea (Debe − Haber).${S.hasMedio ? ` La columna <b>${MEDIO_T()}</b> dice cómo se hizo cada ${S.dir === 'cli' ? 'cobro' : 'pago'}; en cheques muestra el número.` : ''}${S.hasIPend ? ' <b>Medio Pago Documento</b> dice si cada factura fue Contado o Crédito.' : ''}${F.groupBy !== 'none' ? ' Tocá el encabezado gris de cada bloque para abrirlo o cerrarlo.' : ''}${F.offCats.has('suelto') && S.catDefs.some(c => c.k === 'suelto') ? ' Los <b>cobros sin N/S</b> están ocultos: activá «Cobro sin N/S» en Movimiento para sumarlos; con ellos el saldo coincide con el del extracto.' : ''}`,
   mezcla: () => `Pagos que juntan facturas de <b>más de un proveedor o cliente</b> bajo el mismo N/S Pago, casi siempre por un error al cobrar en HIOFFICE. Elegí arriba un proveedor o cliente para ver solo los suyos. Tocá un pago para ver de quién es cada factura.`,
   pagos: () => `Un renglón por cada N/S Pago. <b>Filas</b> es cuántas filas del extracto se sumaron y <b>Neto pagado</b> es ${DT().neto}. <span class="pill p-ok">Cuadra</span> confirma que el importe es igual a la suma de esas filas. Tocá un pago para ver el detalle.`,
@@ -881,7 +883,7 @@ function parseRef(s) {
 
 /* ---------- estado ---------- */
 const S = { almGroups: [], almOpen: new Set(), almShut: new Set(), fileName: '', raw: null, meta: {}, movs: [], lines: [], concepts: [], concept: '', splitProv: false,
-  tab: 'estado', open: new Set(), toggled: new Set(), collapseDefault: { prov: true, mes: false, mov: false, tipo: false },
+  tab: 'estado', open: new Set(), toggled: new Set(), collapseDefault: { prov: true, mes: false, mov: false, tipo: false, pend: true },
   pend: [], pendDefs: [], pendOff: new Set(['demas', 'sinns', 'sinnro']), checks: null, catDefs: [], tiposAll: [], openMedio: new Set(), openMItem: new Set(), hasMedio: false, medioDefs: [], hasTcli: false, empSet: new Set(), dir: 'prov', dirAuto: 'prov', forceDir: 'auto', byRut: true, almDefs: [], provInfo: new Map(), provList: [], colSort: {}, loaded: false };
 const F = { q: '', qn: '', qc: '', prov: '', desde: '', hasta: '', offCats: new Set(), offTipos: new Set(), offMedios: new Set(), offAlms: new Set(), emp: true, onlyEmp: false, multi: false, nc: false, mezcla: false, groupBy: 'none' };
 
@@ -1262,7 +1264,9 @@ function sections(list) {
   else secs.sort((a, b) => a.label.localeCompare(b.label, 'es'));
   return secs;
 }
-const isCollapsed = k => S.collapseDefault[F.groupBy] !== S.toggled.has(F.groupBy + '|' + k);
+/* Pendientes usa su propio juego de bloques (uno por proveedor o cliente) */
+const gKey = () => S.tab === 'pend' ? 'pend' : F.groupBy;
+const isCollapsed = k => S.collapseDefault[gKey()] !== S.toggled.has(gKey() + '|' + k);
 
 /* ---------- vistas ---------- */
 function movPill(L) {
@@ -1690,6 +1694,7 @@ const PEND_CELL = {
   medio: mv => `<td>${mv.pend.medio ? esc(mv.pend.medio) : '<span class="zero">—</span>'}</td>`,
   fila: mv => `<td class="mono">#${esc(mv.n)}</td>`
 };
+const pendGrouped = () => !F.prov && !F.qn;
 function renderPend() {
   const list = pendList(), cols = visCols('pend');
   const chips = S.pendDefs.map(d => `<button type="button" class="chip" data-pend="${d.k}" aria-pressed="${!S.pendOff.has(d.k)}">${d.label} <span class="n">${int(d.n)}</span></button>`).join('');
@@ -1698,9 +1703,25 @@ function renderPend() {
   const bar = `<div class="pend-bar"><div class="chipset"><span class="chip-label">Mostrar${tip(TIPS.pEstados)}</span>${chips || '<span class="pend-sum">No hay documentos pendientes.</span>'}</div>
     <span class="pend-sum">Pendiente <b>${moneyS(P)}</b> en ${plural(list.length, 'documento', 'documentos')}${old ? ` · el más antiguo del ${isoDisp(old)}` : ''}</span></div>`;
   if (!list.length) return hintHTML('pend') + bar + emptyState();
-  const rows = list.map(mv => `<tr class="ln">${cols.map(c => PEND_CELL[c.k](mv)).join('')}</tr>`).join('');
+  const rowOf = mv => `<tr class="ln">${cols.map(c => PEND_CELL[c.k](mv)).join('')}</tr>`;
+  let body;
+  if (pendGrouped()) {
+    /* Sin proveedor o cliente elegido ni búsqueda: un bloque por cada uno, cerrado, con su deuda total */
+    const map = new Map();
+    for (const mv of list) { const k = mv.prov || ''; if (!map.has(k)) map.set(k, []); map.get(k).push(mv); }
+    const cs = S.colSort.pend, byAmt = cs && ['imp', 'pag', 'pend'].includes(cs.k);
+    const tot = (ms, k) => ms.reduce((a, mv) => a + mv.pend[k], 0);
+    const secs = [...map].sort((a, b) => byAmt ? (tot(a[1], cs.k) - tot(b[1], cs.k)) * cs.dir || a[0].localeCompare(b[0], 'es') : a[0].localeCompare(b[0], 'es'));
+    body = secs.map(([k, ms]) => {
+      const col = isCollapsed(k), rut = ms.find(mv => mv.rut)?.rut;
+      const head = spanRow(cols, `<span class="caret" aria-hidden="true">▶</span><span class="sec-label">${esc(k || '(sin nombre)')}</span><span class="sec-meta">${rut ? 'RUT ' + esc(rut) + ' · ' : ''}${plural(ms.length, 'documento', 'documentos')}</span>`,
+        { imp: moneyH(tot(ms, 'imp')), pag: moneyH(tot(ms, 'pag')), pend: moneyH(tot(ms, 'pend')) },
+        `class="sec-head ${col ? '' : 'sec-open'}" data-sec="${esc(k)}" tabindex="0" aria-expanded="${!col}" title="${col ? 'Ver' : 'Ocultar'} los documentos"`);
+      return `<tbody>${head}${col ? '' : ms.map(rowOf).join('')}</tbody>`;
+    }).join('');
+  } else body = `<tbody>${list.map(rowOf).join('')}</tbody>`;
   return hintHTML('pend') + bar + `<div class="tablewrap"><table class="ledger pend">${thead(cols, 'pend')}
-    <tbody>${rows}</tbody>
+    ${body}
     <tfoot>${spanRow(cols, `Total · ${plural(list.length, 'documento', 'documentos')}`, { imp: moneyH(I), pag: moneyH(G), pend: moneyH(P) })}</tfoot>
   </table></div>`;
 }
@@ -1827,7 +1848,7 @@ function lazyCheck() {
 function updateTools() {
   $$('[data-only]').forEach(el => { el.hidden = !el.dataset.only.split(' ').includes(TV()); });
   const tg = $('#toggleAll');
-  tg.hidden = !(S.tab === 'estado' && F.groupBy !== 'none');
+  tg.hidden = !((S.tab === 'estado' && F.groupBy !== 'none') || (S.tab === 'pend' && pendGrouped() && S.pend.some(pendMatch)));
   if (!tg.hidden) tg.textContent = $$('[data-sec]').some(x => x.getAttribute('aria-expanded') === 'true') ? 'Contraer todo' : 'Expandir todo';
 }
 function render() { if (!S.loaded) return; renderSummary(); $('#summary').innerHTML = WHO($('#summary').innerHTML); renderCounts(); renderView(); updateTools(); if (COLS[TV()]) renderColMenu(); renderDDLabels(); saveState(); }
@@ -2096,7 +2117,9 @@ const currentExport = () => whoT(S.tab === 'pend' ? pendExport() : S.tab === 'me
 const cellTxt = v => (v && typeof v === 'object') ? plainNum(v.c) : String(v ?? '');
 function toDelimited(t, d) {
   const q = s => (s.includes(d) || /["\n\r]/.test(s)) ? '"' + s.replace(/"/g, '""') + '"' : s;
-  return [t.header, ...t.rows].map(r => r.map(v => q(cellTxt(v))).join(d)).join('\r\n');
+  // Un texto que empieza con = + - @ (o tab/enter) Excel lo toma como fórmula: se le antepone ' (los importes no se tocan)
+  const safe = v => { const s = cellTxt(v); return typeof v === 'string' && /^[=+\-@\t\r]/.test(s) ? "'" + s : s; };
+  return [t.header, ...t.rows].map(r => r.map(v => q(safe(v))).join(d)).join('\r\n');
 }
 
 let DL = null;
@@ -2621,8 +2644,8 @@ $('#groupBy').addEventListener('change', e => { F.groupBy = e.target.value; rend
 $('#clear').addEventListener('click', () => { resetFilters(false); S.colSort = {}; render(); });
 $('#toggleAll').addEventListener('click', () => {
   const anyOpen = $$('[data-sec]').some(x => x.getAttribute('aria-expanded') === 'true');
-  S.collapseDefault[F.groupBy] = anyOpen;
-  for (const k of [...S.toggled]) if (k.startsWith(F.groupBy + '|')) S.toggled.delete(k);
+  const g = gKey(); S.collapseDefault[g] = anyOpen;
+  for (const k of [...S.toggled]) if (k.startsWith(g + '|')) S.toggled.delete(k);
   render();
 });
 $('#concept').addEventListener('change', e => { S.concept = e.target.value; S.open.clear(); build(); resetFilters(true); render(); });
@@ -2658,7 +2681,7 @@ $('#copyClose').addEventListener('click', () => { $('#copyModal').hidden = true;
 $('#copyModal').addEventListener('click', e => { if (e.target.id === 'copyModal') $('#copyModal').hidden = true; });
 
 function toggleLine(id) { S.open.has(id) ? S.open.delete(id) : S.open.add(id); S.keepScroll = true; renderView(); }
-function toggleSec(k) { const key = F.groupBy + '|' + k; S.toggled.has(key) ? S.toggled.delete(key) : S.toggled.add(key); S.keepScroll = true; renderView(); updateTools(); }
+function toggleSec(k) { const key = gKey() + '|' + k; S.toggled.has(key) ? S.toggled.delete(key) : S.toggled.add(key); S.keepScroll = true; renderView(); updateTools(); }
 function toggleIn(set, k, sel) { set.has(k) ? set.delete(k) : set.add(k); S.keepScroll = true; renderView(); const el = sel && $(sel); if (el) el.focus({ preventScroll: true }); }
 $('#view').addEventListener('click', e => {
   const hx = e.target.closest('[data-hint-x]');
@@ -2808,7 +2831,21 @@ HIO.base = { ...HIO.ids };
   for (const k in inp) { inp[k].placeholder = HIO.base[k]; inp[k].value = HIO.ids[k] !== HIO.base[k] ? HIO.ids[k] : '';
     inp[k].addEventListener('change', () => { const n = parseInt(inp[k].value, 10); HIO.ids[k] = n > 0 ? n : HIO.base[k]; inp[k].value = n > 0 && n !== HIO.base[k] ? n : '';
       const o = {}; for (const j in HIO.ids) if (HIO.ids[j] !== HIO.base[j]) o[j] = HIO.ids[j]; store.set('hioffice-ids', Object.keys(o).length ? JSON.stringify(o) : ''); }); } })();
-function hioCred() { try { return JSON.parse(store.get('hioffice-cred') || 'null'); } catch (e) { return null; } }
+/* La contraseña nunca la guarda la página (V0.28): con doble clic todas las páginas abiertas desde archivos comparten esa memoria.
+   Queda solo en memoria mientras la página está abierta. En la web (Chrome/Android) la guarda el gestor de contraseñas del navegador,
+   cifrada, con la API de credenciales: se ofrece guardar después de un login que anduvo y se lee al tocar «Actualizar». */
+const HIO_WEB = location.protocol !== 'file:', HIO_PC = HIO_WEB && 'PasswordCredential' in window && !!navigator.credentials;
+try { localStorage.removeItem('hioffice-cred'); } catch (e) {} // borra la guardada por versiones anteriores
+$('#hioSaveNote').hidden = !HIO_PC;
+async function hioSaved() { // la que guardó Chrome (o null)
+  if (!HIO_PC) return null;
+  try { const c = await navigator.credentials.get({ password: true, mediation: 'optional' }); return c && c.password ? { email: c.id, pass: c.password } : null; } catch (e) { return null; }
+}
+function hioKeep(cred) { // después de un login que anduvo: que Chrome ofrezca guardarla
+  if (!HIO_PC || !cred.fresh) return; cred.fresh = false;
+  try { navigator.credentials.store(new PasswordCredential({ id: cred.email, password: cred.pass })).catch(() => {}); } catch (e) {}
+}
+function hioForget() { HIO.mem = null; if (HIO_PC && navigator.credentials.preventSilentAccess) navigator.credentials.preventSilentAccess().catch(() => {}); }
 function hioOpenBuf(b64, name) { // siempre viene de un botón Clientes/Proveedores
   const bin = atob(b64), buf = new Uint8Array(bin.length);
   for (let i = 0; i < bin.length; i++) buf[i] = bin.charCodeAt(i);
@@ -2848,19 +2885,20 @@ async function hioFetch(k, cred, phase = () => {}) {
 }
 async function hioUpdate(k) {
   if (HIO.busy) return;
-  const cred = hioCred() || HIO.mem;
-  if (!cred) { HIO.pend = k; hioAsk(''); return; }
   HIO.busy = true;
+  const cred = HIO.mem || (HIO.mem = await hioSaved());
+  if (!cred) { HIO.busy = false; HIO.pend = k; hioAsk(''); return; }
   const btns = [...document.querySelectorAll(`[data-hio-upd]`)], lbl = btns.map(b => b.textContent);
   btns.forEach(b => { b.disabled = true; if (b.dataset.hioUpd === k) b.textContent = 'Actualizando…'; });
   const prog = hioProgress(k);
   try {
     const doc = await hioFetch(k, cred, prog.phase);
+    hioKeep(cred);
     prog.phase('Abriendo el estado de cuenta…'); await new Promise(res => setTimeout(res, 30));
     hioOpenBuf(doc.data, `${HIO.names[k]} (HIOFFICE ${(d => `${String(d.getDate()).padStart(2, '0')}/${String(d.getMonth() + 1).padStart(2, '0')} ${String(d.getHours()).padStart(2, '0')}:${String(d.getMinutes()).padStart(2, '0')}`)(new Date())})`);
   } catch (err) {
     const m = err.message;
-    if (m === 'LOGIN') { store.set('hioffice-cred', ''); HIO.mem = null; HIO.pend = k; hioAsk('HIOFFICE no aceptó el email o la contraseña. Revisalos y probá de nuevo.', cred.email); }
+    if (m === 'LOGIN') { hioForget(); HIO.pend = k; hioAsk('HIOFFICE no aceptó el email o la contraseña. Revisalos y probá de nuevo.', cred.email); }
     else showAlert(m.startsWith('HTTP') ? `HIOFFICE no está respondiendo (${m}). Probá de nuevo en un rato.`
       : m === 'NET' ? 'La página no pudo comunicarse con HIOFFICE. Revisá la conexión a internet; si sigue igual, puede que el navegador esté bloqueando la conexión directa.'
       : m === 'VACIO' ? 'HIOFFICE respondió pero no mandó el archivo, aunque se lo pedimos varias veces durante más de un minuto. Probá exportarlo desde HIOFFICE: si ahí tampoco sale, el problema está en la exportación.' + (err.detail ? ` Respuesta de HIOFFICE: ${err.detail}` : '')
@@ -2888,7 +2926,7 @@ function hioProgress(k) {
   };
 }
 function hioAsk(err, email) {
-  const c = hioCred(); $('#hioEmail').value = email || c?.email || HIO.mem?.email || ''; $('#hioPass').value = '';
+  $('#hioEmail').value = email || HIO.mem?.email || store.get('hioffice-email') || ''; $('#hioPass').value = '';
   $('#hioErr').textContent = err; $('#hioErr').hidden = !err;
   $('#hioModal').hidden = false; ($('#hioEmail').value ? $('#hioPass') : $('#hioEmail')).focus();
 }
@@ -2896,7 +2934,7 @@ $('#hioForm').addEventListener('submit', e => {
   e.preventDefault();
   const cred = { email: $('#hioEmail').value.trim(), pass: $('#hioPass').value };
   if (!cred.email || !cred.pass) return;
-  if ($('#hioRemember').checked) store.set('hioffice-cred', JSON.stringify(cred)); else { store.set('hioffice-cred', ''); HIO.mem = cred; }
+  cred.fresh = true; HIO.mem = cred; store.set('hioffice-email', cred.email);
   $('#hioModal').hidden = true; const k = HIO.pend; HIO.pend = null; if (k) hioUpdate(k);
 });
 $('#hioCancel').addEventListener('click', () => { $('#hioModal').hidden = true; HIO.pend = null; });
